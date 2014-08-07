@@ -26,7 +26,7 @@
 
 define racadm::config(
   $username = 'root',
-  $password = 'calvin',
+  $password = 'root',
   $url      = $name,
   $target   = "${settings::confdir}/defice/${name}.conf"
   ) {
