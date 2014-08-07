@@ -16,7 +16,7 @@ class Puppet::Util::NetworkDevice::Racadm::Device
     raise ArgumentError, "no user specified" unless @url.user
     raise ArgumentError, "no password specified" unless @url.password
 
-    @transport ||=  Puppet::Util::NetworkDevice::Racadm::Transport.new(@url)
+    @transport ||=  Puppet::Util::NetworkDevice::Racadm::Transport.new(@url.host, @url.port, @url.user, @url.password)
   end
 
   def facts
