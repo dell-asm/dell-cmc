@@ -1,0 +1,17 @@
+{
+  "name": "dell-racadm",
+  "version": "0.1.0",
+  "author": "Logan M Kimmel",
+  "summary": "Custom puppet device that uses racadm",
+  "license": "Apache 2.0",
+  "source": "git",
+  "project_page": null,
+  "issues_url": null,
+  "dependencies": [
+    {
+      "name": "puppetlabs-stdlib",
+      "version_range": ">= 1.0.0"
+    }
+  ]
+}
+
