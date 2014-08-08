@@ -1,4 +1,4 @@
-require 'net-ssh'
+require 'net/ssh'
 
 module Puppet::Util::NetworkDevice::Racadm
   class Transport
@@ -12,7 +12,7 @@ module Puppet::Util::NetworkDevice::Racadm
     end
 
     def connect
-      @client = Net::SSH.start(@hostname, @port.to_i, @username, @password)
+      @client = Net::SSH.start(@hostname, @username, {:port => @port.to_i, :password => @password})
       @client
     end
   end
