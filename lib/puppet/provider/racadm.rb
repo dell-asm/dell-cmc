@@ -1,33 +1,20 @@
 require 'puppet/util/network_device/racadm/device'
 
-class Puppet::Provider::Racadm < Puppet::Provider
+class Puppet::Provider::Racadm < Puppet::Provider::NetworkDevice
 
-  attr_accessor :device
-
-  def network_address(value)
-    value.sub(":" + value.split(':').last, '')
+  def self.device(url)
+    Puppet::Util::NetworkDevice::Device.new
   end
 
-  def network_port(value)
-    port = value.split(':').last
-    port.to_i unless port == '*'
-    port
-  end
-
-  def self.transport
-    if Facter.value(:url) then
-      Puppet.debug "Puppet::Util::NetworkDevice::Racadm: connecting via facter url."
-      @device ||= Puppet::Util::NetworkDevice::Racadm::Device.new(Facter.value(:url))
-    else
-      @device ||= Puppet::Util::NetworkDevice.current
-      raise Puppet::Error, "Puppet::Util::NetworkDevice::Racadm: device not initialzed #{caller.join("\n")}" unless @device
+  Puppet::Type.type(:setslotname).provide :racadm do
+    desc "Dell Racadm provider for setting slotname"
+   
+    mk_resource_methods
+    def initialize(device, *args)
+      super
     end
 
-    @transport = @device.transport
-  end
-
-  def transport
-    self.class.transport
-  end
+    def self.lookup(device, name)
+    
 
 end

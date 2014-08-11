@@ -3,14 +3,13 @@ require 'puppet/util/network_device/racadm/transport'
 require 'puppet/util/network_device/racadm/facts'
 #require 'puppet/util/network_device/base_ftos'
 
-class Puppet::Util::NetworkDevice::Racadm::Device #< Puppet::Util::NetworkDevice::Base_ftos
+class Puppet::Util::NetworkDevice::Racadm::Device 
 
   attr_accessor :url, :transport
 
   def initialize(url, option = {})
     @url = URI.parse(url)
     @option = option
-#    transport.default_prompt = /[$]\s?\z/n
 
     Puppet.debug("Puppet::Device::Racadm: connecting to Racadm device #{@url.host} on port #{@url.port}")
 
@@ -18,17 +17,15 @@ class Puppet::Util::NetworkDevice::Racadm::Device #< Puppet::Util::NetworkDevice
     raise ArgumentError, "no user specified" unless @url.user
     @transport ||=  Puppet::Util::NetworkDevice::Racadm::Transport.new(@url.host, @url.port, @url.user, @url.password)
     @client = @transport.connect
-    
-    Puppet.debug("connected!****")
+  end
 
-    chassisname = @client.exec!("racadm getchassisname")
-    Puppet.debug("chassis name = #{chassisname}")
-    @client.close
-   
+
+  def self.clear
+    @map.clear
   end
 
   def facts
-    @facts ||= Puppet::Util::NetworkDevice::Racadm::Facts.new(@transport)
+    @facts ||= Puppet::Util::NetworkDevice::Racadm::Facts.new(@client)
     facts = @facts.retrieve
     facts
   end
