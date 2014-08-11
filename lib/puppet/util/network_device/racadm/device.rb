@@ -27,6 +27,7 @@ class Puppet::Util::NetworkDevice::Racadm::Device
   def facts
     @facts ||= Puppet::Util::NetworkDevice::Racadm::Facts.new(@client)
     facts = @facts.retrieve
+    Puppet.debug("#{facts.each { |k,v| puts k + v + ',' }} ")
     facts
   end
 

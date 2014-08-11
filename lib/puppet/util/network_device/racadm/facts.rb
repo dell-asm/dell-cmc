@@ -13,8 +13,9 @@ class Puppet::Util::NetworkDevice::Racadm::Facts
     [ 'getchassisname',
       'getassettag'
     ].each do |k|
-      @facts[k] = @client.exec!("racadm #{k}")
+      @facts[k] = @client.exec!("racadm #{k}").chop
     end
+    @facts
   end
 
 end
