@@ -3,21 +3,15 @@ Puppet::Type.newtype(:racadm_fw_update) do
 
   apply_to_device
 
-  ensurable do
-    newvalue(:present) do
-#      provider.update
-    end
+  ensurable 
+
+  newparam(:name, :namevar => true) do
+    desc "Name of the resource (pretty much meaningless)"
+  end
+  
+  newparam(:fw_version) do
+    desc "The version that the firmware should be on"
   end
 
-  newparam(:fw_version, :namevar=>true) do
-      desc "The firmware version"
-  end
-
-  newparam(:source) do
-    desc "Source of the fw binary"
-
-    validate do |value|
-    end
-  end
 end
 

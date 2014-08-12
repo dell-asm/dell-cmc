@@ -12,7 +12,6 @@ module Puppet::Util::NetworkDevice::Racadm
     end
 
     def connect
-      Puppet.debug("Connecting with host #{@host}, #{@port}, #{@username}")
       @client = Net::SSH.start(@hostname, @username, {:port => @port.to_i, :password => @password})
       @client
     end
