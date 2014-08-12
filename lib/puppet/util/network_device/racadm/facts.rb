@@ -15,6 +15,7 @@ class Puppet::Util::NetworkDevice::Racadm::Facts
     ].each do |k|
       @facts[k] = @client.exec!("racadm #{k}").chop
     end
+    @facts[:url] = @url
     @facts
   end
 

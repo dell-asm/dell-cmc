@@ -1,7 +1,6 @@
 require 'uri'
 require 'puppet/util/network_device/racadm/transport'
 require 'puppet/util/network_device/racadm/facts'
-#require 'puppet/util/network_device/base_ftos'
 
 class Puppet::Util::NetworkDevice::Racadm::Device 
 
@@ -27,7 +26,8 @@ class Puppet::Util::NetworkDevice::Racadm::Device
   def facts
     @facts ||= Puppet::Util::NetworkDevice::Racadm::Facts.new(@client)
     facts = @facts.retrieve
-    Puppet.debug("#{facts.each { |k,v| puts k + v + ',' }} ")
+    Puppet.debug "certname: #{$certname}"
+    Puppet.debug("url: #{Facter.value(:url)}")
     facts
   end
 
