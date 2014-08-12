@@ -1,17 +1,16 @@
 Puppet::Type.newtype(:racadm_fw_update) do
   desc "racadm util to update firmware"
+
+  apply_to_device
+
   ensurable do
-    newvalue(:update) do
-      provider.update
+    newvalue(:present) do
+#      provider.update
     end
   end
 
-  newparam(:fw_version) do
-    desc "The firmware version"
-
-    validate do |value|
-    end
-    isnamevar
+  newparam(:fw_version, :namevar=>true) do
+      desc "The firmware version"
   end
 
   newparam(:source) do

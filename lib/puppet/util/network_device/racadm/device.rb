@@ -16,6 +16,7 @@ class Puppet::Util::NetworkDevice::Racadm::Device
     raise ArgumentError, "no user specified" unless @url.user
     @transport ||=  Puppet::Util::NetworkDevice::Racadm::Transport.new(@url.host, @url.port, @url.user, @url.password)
     @client = @transport.connect
+    @client
   end
 
 
@@ -26,8 +27,6 @@ class Puppet::Util::NetworkDevice::Racadm::Device
   def facts
     @facts ||= Puppet::Util::NetworkDevice::Racadm::Facts.new(@client)
     facts = @facts.retrieve
-    Puppet.debug "certname: #{$certname}"
-    Puppet.debug("url: #{Facter.value(:url)}")
     facts
   end
 

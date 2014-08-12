@@ -1,25 +1,41 @@
-Puppet::Type.type(:racadm_fw_update).provide(:racadm_fw_update) do
-  desc "Provides racadm support"
-
+Puppet::Type.type(:racadm_fw_update).provide(:racadm) do
   attr_accessor :device
 
-  commands :racadmcmd => "racadm"
+  def exists?
+    current_version = get_current_version
+    Puppet.debug current_version
+    current_version != nil
+    Puppet.debug "Hi!"
+    1 != 0
+  end 
 
-  def self.transport
+  def get_current_version
+    begin
+      output = transport.exec!('racadm getversion -m cmc-1')
+      Puppet.debug output
+    rescue Puppet::ExecutionFailure => e
+      Puppet.debug("#get_current_version had an error -> #{e.inspect}")
+      return nil
+    end
+    output.each_line do |l|
+      if !l.start_with? '<'
+        return l.split(" ")[1]
+      else
+        return nil
+      end
+    end
+  end
+
+  def transport
     if Facter.value(:url) then
-      Puppet.debug("Puppet::Util::NetworkDevice::F4: connecting via facter url.")
+      Puppet.debug "Puppet::Util::NetworkDevice::F5: connecting via facter url."
       @device ||= Puppet::Util::NetworkDevice::Racadm::Device.new(Facter.value(:url))
     else
       @device ||= Puppet::Util::NetworkDevice.current
-      raise Puppet::Error, "Puppet::Util::NetworkDevice::Racadm: device not initialized #{caller.join("\n")}" unless @device
+      raise Puppet::Error, "Puppet::Util::NetworkDevice::F5: device not initialized #{caller.join("\n")}" unless @device
     end
-    Puppet.debug "#{puts @device}"
+    @device.transport.connect
   end
-
   
-
-  def update(fw_version)
-    racadmcmd fwupdate, "-f 172.18.4.100", "root calvin", "-d #{:fw_version}.cmc", "-m cmc-standby"
-  end
 
 end
