@@ -40,7 +40,8 @@ Puppet::Type.type(:racadm_fw_update).provide(:racadm) do
   end
   
   def create
-    update_cmd = "racadm fwupdate -g -u -a 172.18.4.100 -d firmimg.cmc -m cmc-standby"
+    path = "cmc_" + resource[:fw_version].split('.')[0..2].join("_").downcase
+    update_cmd = "racadm fwupdate -g -u -a 172.18.4.100 -d #{path}/firmimg.cmc -m cmc-standby"
     begin
       output = transport.exec!(update_cmd)
       Puppet.debug "#{output}"
@@ -57,6 +58,7 @@ Puppet::Type.type(:racadm_fw_update).provide(:racadm) do
       sleep 10
       complete = get_current_version(resource[:fw_version])
     end
+    true
   end
     
 end
