@@ -19,11 +19,6 @@ class Puppet::Util::NetworkDevice::Racadm::Device
     @client
   end
 
-
-  def self.clear
-    @map.clear
-  end
-
   def facts
     @facts ||= Puppet::Util::NetworkDevice::Racadm::Facts.new(@client)
     facts = @facts.retrieve
