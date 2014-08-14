@@ -1,13 +1,11 @@
 Puppet::Type.type(:racadm_fw_update).provide(:racadm) do
   attr_accessor :device
 
-  def initialize
-    if resource[:firmwares].count != 1
+  def exists?
+    if resource[:firmwares].class == Array and resource[:firmwares].count != 1
       raise Puppet::Error,  "Firmwares for the chassis update can only contain 1 and only 1 hash"
     end
-    @fw = resource[:firmwares].first
-
-  def exists?
+    @fw = resource[:firmwares]
     current_version = get_current_version(@fw['version'])
     current_version
   end 
