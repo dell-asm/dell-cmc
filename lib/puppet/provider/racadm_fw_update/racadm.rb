@@ -1,8 +1,14 @@
 Puppet::Type.type(:racadm_fw_update).provide(:racadm) do
   attr_accessor :device
 
+  def initialize
+    if resource[:firmwares].count != 1
+      raise Puppet::Error,  "Firmwares for the chassis update can only contain 1 and only 1 hash"
+    end
+    @fw = resource[:firmwares].first
+
   def exists?
-    current_version = get_current_version(resource[:fw_version])
+    current_version = get_current_version(@fw['version'])
     current_version
   end 
 
@@ -58,8 +64,8 @@ Puppet::Type.type(:racadm_fw_update).provide(:racadm) do
   
   def create
     transport
-    path = "cmc_" + resource[:fw_version].split('.')[0..2].join("_").downcase
-    update_cmd = "racadm fwupdate -g -u -a 172.18.4.100 -d #{path}/firmimg.cmc -m cmc-standby"
+    location = "#{@fw['path']}/firmimg.cmc"
+    update_cmd = "racadm fwupdate -g -u -a 172.18.4.100 -d #{location} -m cmc-standby"
     begin
       output = @client.exec!(update_cmd)
       Puppet.debug "#{output}"
