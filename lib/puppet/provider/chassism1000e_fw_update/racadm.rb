@@ -1,4 +1,4 @@
-Puppet::Type.type(:racadm_fw_update).provide(:racadm) do
+Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
   attr_accessor :device
 
   def exists?
@@ -39,7 +39,7 @@ Puppet::Type.type(:racadm_fw_update).provide(:racadm) do
       output = @client.exec!('racadm fwupdate -s')
     rescue Puppet::ExecutionFailure => e
       Puppet.debug("#get_update status had error executing -> #{e.inspect}")
-      raise Puppet::Error, "Puppet::Util::Network::Device::Racadm: device failed"
+      raise Puppet::Error, "Puppet::Util::Network::Device::Chassism1000e: device failed"
     end
     if output.include? "Ready for firmware update"
       true
@@ -50,11 +50,11 @@ Puppet::Type.type(:racadm_fw_update).provide(:racadm) do
 
   def transport
     if Facter.value(:url) then
-      Puppet.debug "Puppet::Util::NetworkDevice::Racadm: connecting via facter url."
+      Puppet.debug "Puppet::Util::NetworkDevice::Chassism1000e: connecting via facter url."
       @device ||= Puppet::Util::NetworkDevice::Racadm::Device.new(Facter.value(:url))
     else
       @device ||= Puppet::Util::NetworkDevice.current
-      raise Puppet::Error, "Puppet::Util::NetworkDevice::Racadm: device not initialized #{caller.join("\n")}" unless @device
+      raise Puppet::Error, "Puppet::Util::NetworkDevice::Chassism1000e: device not initialized #{caller.join("\n")}" unless @device
     end
     @client = @device.transport.connect
     @device.transport
@@ -68,10 +68,10 @@ Puppet::Type.type(:racadm_fw_update).provide(:racadm) do
       output = @client.exec!(update_cmd)
       Puppet.debug "#{output}"
       if output.include? "failed"
-        raise Puppet::Error, "Puppet::Racadm::Fw_update: failed #{output}"
+        raise Puppet::Error, "Puppet::Chassism1000e::Fw_update: failed #{output}"
       end
     rescue Puppet::ExecutionFailure => e
-      Puppet.debug("#racadm_fw_update had an error -> #{e.inspect}")
+      Puppet.debug("#Chassism1000e_fw_update had an error -> #{e.inspect}")
     end
     begin
       status = @client.exec!("racadm fwupdate -s")

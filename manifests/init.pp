@@ -1,6 +1,6 @@
-# == Class: racadm
+# == Class: chassism1000e
 #
-# Full description of class racadm here.
+# Full description of class chassism1000e here.
 #
 # === Parameters
 #
@@ -23,7 +23,7 @@
 #
 # === Examples
 #
-#  class { racadm:
+#  class { chassism1000e:
 #    servers => [ 'pool.ntp.org', 'ntp.local.company.com' ],
 #  }
 #
@@ -35,12 +35,12 @@
 #
 # Copyright 2014 Your name here, unless otherwise noted.
 #
-class racadm (
-  $owner    = $racadm::params::owner,
-  $group    = $racadm::params::group,
-  $provider = $racadm::params::provider,
-  $mode     = $racadm::params::mode
-) inherits racadm::params {
+class chassism1000e (
+  $owner    = $chassism1000e::params::owner,
+  $group    = $chassism1000e::params::group,
+  $provider = $chassism1000e::params::provider,
+  $mode     = $chassism1000e::params::mode
+) inherits chassism1000e::params {
 
   if !defined(File["${settings::confdir}/device"]) {
     file { "${settings::confdir}/device":

@@ -1,5 +1,5 @@
-#Paramaters class for racadm
-class racadm::params {
+#Paramaters class for chassism1000e
+class chassism1000e::params {
   $owner    = 'pe-puppet'
   $group    = 'pe-puppet'
   $provider = 'gem'
