@@ -13,5 +13,13 @@ Puppet::Type.newtype(:racadm_fw_update) do
     desc "The version that the firmware should be on"
   end
 
+  newproperty(:catalog) do
+    desc "Location of the Dell firmware catalog"
+  end
+  
+  newproperty(:path) do
+    desc "Location of the firmware binary (on the appliance)" #As of now this is relative to tftp share
+  end
+
 end
 
