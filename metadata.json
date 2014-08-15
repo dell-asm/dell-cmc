@@ -1,8 +1,8 @@
 {
-  "name": "dell-racadm",
+  "name": "dell-chassism1000e",
   "version": "0.1.0",
   "author": "Logan M Kimmel",
-  "summary": "Custom puppet device that uses racadm",
+  "summary": "Custom puppet device that manages the Dell m1000e chassis",
   "license": "Apache 2.0",
   "source": "git",
   "project_page": null,

@@ -1,7 +1,7 @@
 require 'spec_helper'
-describe 'racadm' do
+describe 'chassism1000e' do
 
   context 'with defaults for all parameters' do
-    it { should contain_class('racadm') }
+    it { should contain_class('chassism1000e') }
   end
 end

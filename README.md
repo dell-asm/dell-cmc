@@ -1,4 +1,4 @@
-# racadm
+# Chassism1000e
 
 #### Table of Contents
 
@@ -15,7 +15,7 @@
 ## Overview
 
 _This is a work in progress!_
-racadm is a puppet module for running racadm commands on network devices.  Extending Puppet's "Device" capability.
+Chassism1000e is a puppet module for managing the Dell m1000e chassis.  Extending Puppet's "Device" capability.
 
 ## Module Description
 
@@ -35,7 +35,7 @@ The following class would create an appropriate configuration to run the puppet 
 
 ```puppet
     $hostname = 'localhost'
-    racadm::config { $hostname:
+    chassism1000e::config { $hostname:
       username => 'root',
       password => 'letmeinnow',
       port     => '22',
@@ -44,8 +44,10 @@ The following class would create an appropriate configuration to run the puppet 
     }
     
     racadm_fw_update { 'update':
-      ensure => present,
-      fw_version => '0.1.4',
+      firmwares =>
+        version => '0.4.1',
+        path    => 'path/to/binary'
+      }
     }
 ```
 

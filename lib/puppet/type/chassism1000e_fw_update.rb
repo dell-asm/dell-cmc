@@ -1,4 +1,4 @@
-Puppet::Type.newtype(:racadm_fw_update) do
+Puppet::Type.newtype(:chassism1000e_fw_update) do
   desc "racadm util to update firmware"
 
   apply_to_device

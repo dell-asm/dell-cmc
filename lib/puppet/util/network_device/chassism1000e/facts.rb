@@ -1,6 +1,6 @@
-require 'puppet/util/network_device/racadm'
+require 'puppet/util/network_device/chassism1000e'
 
-class Puppet::Util::NetworkDevice::Racadm::Facts
+class Puppet::Util::NetworkDevice::Chassism1000e::Facts
 
   attr_reader :client
 

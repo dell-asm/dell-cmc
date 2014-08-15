@@ -1,6 +1,6 @@
 require 'net/ssh'
 
-module Puppet::Util::NetworkDevice::Racadm
+module Puppet::Util::NetworkDevice::Chassism1000e
   class Transport
     attr_reader :hostname, :port, :username, :password
 
