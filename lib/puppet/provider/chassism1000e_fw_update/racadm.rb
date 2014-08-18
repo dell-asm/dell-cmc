@@ -67,8 +67,8 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
     transport
     location = "#{@fw['path']}/firmimg.cmc"
     update_cmd = "racadm fwupdate -g -u -a #{@fw_host} -d #{location} -m cmc-standby -m cmc-active"
-    Puppet.debug(update_cmd)
     begin
+      Puppet.debug("Running: " + update_cmd)
       output = @client.exec!(update_cmd)
       Puppet.debug "#{output}"
       if output.include? "failed"
