@@ -13,25 +13,27 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
   def get_current_version(fw_version)
     transport
     begin
-      output = @client.exec!('racadm getversion -m cmc-1')
+      output = @client.exec!('racadm getversion -m cmc-1 -m cmc-2')
     rescue Puppet::ExecutionFailure => e
       Puppet.debug("#get_current_version had an error -> #{e.inspect}")
       return nil
     end
     @client.close
-    version = nil
+    versions = {}
     output.each_line do |l|
       if !l.start_with? '<'
-        version = l.split(" ")[1]
+        versions[l.split(' ')[0]] = l.split(' ')[1]
       end
     end
-    if version != fw_version
-      Puppet.debug "Update needed! current version: #{version} | required version #{fw_version}"
-      false
-    else
-      Puppet.debug "CMC fw version up to date"
-      true
+    Puppet.debug("versions: #{versions}")
+    versions.each do |k,v|
+      if v != fw_version
+        Puppet.debug "Firmware update needed for #{k}. Current version: #{v} | required version #{fw_version}"
+        return false
+      end
     end
+    Puppet.debug "CMC firmware versions up to date"
+    true
   end
 
   def ready_to_update?
@@ -63,7 +65,7 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
   def create
     transport
     location = "#{@fw['path']}/firmimg.cmc"
-    update_cmd = "racadm fwupdate -g -u -a 172.18.4.100 -d #{location} -m cmc-standby"
+    update_cmd = "racadm fwupdate -g -u -a 172.18.4.100 -d #{location} -m cmc-standby -m cmc-active"
     begin
       output = @client.exec!(update_cmd)
       Puppet.debug "#{output}"
@@ -90,4 +92,3 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
   end
     
 end
-
