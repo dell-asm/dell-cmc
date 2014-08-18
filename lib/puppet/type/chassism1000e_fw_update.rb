@@ -13,5 +13,9 @@ Puppet::Type.newtype(:chassism1000e_fw_update) do
     desc "The version that the firmware should be on"
   end
 
+  newparam(:fw_host) do
+    desc "The host ip for the remote location of the firmware"
+  end
+
 end
 
