@@ -1,6 +1,7 @@
 require 'uri'
 require 'puppet/util/network_device/chassism1000e/transport'
 require 'puppet/util/network_device/chassism1000e/facts'
+require '/etc/puppetlabs/puppet/modules/asm_lib/lib/security/encode'
 
 class Puppet::Util::NetworkDevice::Chassism1000e::Device 
 
@@ -14,7 +15,12 @@ class Puppet::Util::NetworkDevice::Chassism1000e::Device
 
     raise ArgumentError, "Invalidscheme #{@url.scheme}. Must be ssh" unless @url.scheme == 'ssh'
     raise ArgumentError, "no user specified" unless @url.user
-    @transport ||=  Puppet::Util::NetworkDevice::Chassism1000e::Transport.new(@url.host, @url.port, @url.user, @url.password)
+    begin
+      unencrypted_password = URI.decode(asm_decrypt(@url.password))
+    rescue Exception => e
+      raise Puppet::Error, "Puppet::Device::Chassism100e: Error decrypted the password: #{e.inspect}"
+    end
+    @transport ||=  Puppet::Util::NetworkDevice::Chassism1000e::Transport.new(@url.host, @url.port, @url.user, unencrypted_password)
     @client = @transport.connect
     @client
   end

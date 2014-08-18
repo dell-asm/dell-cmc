@@ -1,4 +1,5 @@
 require 'net/ssh'
+require 'uri'
 
 module Puppet::Util::NetworkDevice::Chassism1000e
   class Transport
