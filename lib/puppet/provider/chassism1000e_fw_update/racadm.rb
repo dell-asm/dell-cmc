@@ -14,7 +14,7 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
   def get_current_version(fw_version)
     transport
     begin
-      output = @client.exec!('racadm getversion -m cmc-1 -m cmc-2')
+      output = @client.exec!('racadm getsysinfo')
     rescue Puppet::ExecutionFailure => e
       Puppet.debug("#get_current_version had an error -> #{e.inspect}")
       return nil
@@ -22,8 +22,11 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
     @client.close
     versions = {}
     output.each_line do |l|
-      if !l.start_with? '<'
-        versions[l.split(' ')[0]] = l.split(' ')[1]
+      if l.start_with? 'Primary CMC Version'
+        versions[:primary] = l.split('=')[1].gsub(' ','').chop
+      elsif l.start_with? 'Standby CMC Version'
+        versions[:standby] = l.split('=')[1].gsub(' ','').chop
+        break
       end
     end
     Puppet.debug("versions: #{versions}")
