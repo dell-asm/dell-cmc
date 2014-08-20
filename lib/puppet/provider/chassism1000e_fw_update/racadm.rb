@@ -40,17 +40,26 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
     true
   end
 
-  def ready_to_update?
+  def update_status?
     begin
+      transport
       output = @client.exec!('racadm fwupdate -s')
     rescue Puppet::ExecutionFailure => e
       Puppet.debug("#get_update status had error executing -> #{e.inspect}")
       raise Puppet::Error, "Puppet::Util::Network::Device::Chassism1000e: device failed"
     end
     if output.include? "Ready for firmware update"
-      true
-    else
-      false
+      @client.close
+      return "ready"
+    elsif output.include? "Firmware update operation failed"
+      error_output = get_failed_error(@client)
+      @client.close
+      raise Puppet::Error, "Puppet::Firmware::Chassis update failed #{error_output}"
+      return "failed"
+    elsif output.include? "Firmware update in progress"
+      @client.close
+      Puppet.debug("Firmware update in progress")
+      return "in_progress"
     end
   end
 
@@ -74,26 +83,36 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
       Puppet.debug("Running: " + update_cmd)
       output = @client.exec!(update_cmd)
       Puppet.debug "#{output}"
-      if output.include? "failed"
-        raise Puppet::Error, "Puppet::Chassism1000e::Fw_update: failed #{output}"
-      end
     rescue Puppet::ExecutionFailure => e
       Puppet.debug("#Chassism1000e_fw_update had an error -> #{e.inspect}")
     end
-    begin
-      status = @client.exec!("racadm fwupdate -s")
-      Puppet.debug "#{status}"
-    rescue Puppet::ExecutionFailure => e
-      Puppet.debug("Checking status connection error: #{e.inspect}")
-      raise Puppet::Error, "Failed to check status after update"
-    end
-    complete = false
-    until complete
-      sleep 10
-      complete = ready_to_update?
-    end
     @client.close
+    sleep 20
+    status = nil
+    until status == "ready"
+      status = update_status?
+      sleep 15
+    end
     true
   end
-    
+
+
+  def get_failed_error(client)
+    log = client.exec!("racadm gettracelog")
+    output = []
+    s = false
+    log.each_line do |l|
+      if l.include? "Failed"
+        output << l
+        s = true
+      elsif s and l.include? "Error"
+        output << l
+        s = false
+      elsif s 
+        output << l
+      end
+    end
+    output.join
+  end
+
 end

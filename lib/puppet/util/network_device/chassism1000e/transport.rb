@@ -13,8 +13,14 @@ module Puppet::Util::NetworkDevice::Chassism1000e
     end
 
     def connect
-      @client = Net::SSH.start(@hostname, @username, {:port => @port.to_i, :password => @password})
-      @client
+      i = 0
+      begin
+        @client = Net::SSH.start(@hostname, @username, {:port => @port.to_i, :password => @password})
+        return @client
+      rescue
+        i += 1
+        retry if i < 4
+      end
     end
   end
 end
