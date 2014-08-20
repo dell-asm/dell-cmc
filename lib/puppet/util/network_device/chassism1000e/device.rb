@@ -10,11 +10,10 @@ class Puppet::Util::NetworkDevice::Chassism1000e::Device
   def initialize(url, option = {})
     @url = URI.parse(url)
     @option = option
+    @url.port = 22 unless @url.port
 
     Puppet.debug("Puppet::Device::Chassism1000e: connecting to Chassism1000e device #{@url.host} on port #{@url.port}")
 
-    raise ArgumentError, "Invalidscheme #{@url.scheme}. Must be ssh" unless @url.scheme == 'ssh'
-    raise ArgumentError, "no user specified" unless @url.user
     begin
       unencrypted_password = URI.decode(asm_decrypt(@url.password))
     rescue Exception => e
