@@ -40,6 +40,8 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
     true
   end
 
+
+  #This will throw a puppet exception if the racadm update fails
   def update_status?
     begin
       transport
@@ -55,7 +57,6 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
       error_output = get_failed_error(@client)
       @client.close
       raise Puppet::Error, "Puppet::Firmware::Chassis update failed #{error_output}"
-      return "failed"
     elsif output.include? "Firmware update in progress"
       @client.close
       Puppet.debug("Firmware update in progress")

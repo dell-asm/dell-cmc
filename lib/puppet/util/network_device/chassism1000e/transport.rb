@@ -19,8 +19,12 @@ module Puppet::Util::NetworkDevice::Chassism1000e
         return @client
       rescue
         i += 1
-        retry if i < 4
+        if i < 4
+          Puppet.debug("Puppet::Util::NetworkDevice::Chassism100e::Transport faile to connect. retrying")
+          retry
+        end
       end
     end
+
   end
 end
