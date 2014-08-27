@@ -67,13 +67,8 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
   end
 
   def transport
-    if Facter.value(:url) then
-      Puppet.debug "Puppet::Util::NetworkDevice::Chassism1000e: connecting via facter url."
-      @device ||= Puppet::Util::NetworkDevice::Racadm::Device.new(Facter.value(:url))
-    else
-      @device ||= Puppet::Util::NetworkDevice.current
-      raise Puppet::Error, "Puppet::Util::NetworkDevice::Chassism1000e: device not initialized #{caller.join("\n")}" unless @device
-    end
+    @device ||= Puppet::Util::NetworkDevice.current
+    raise Puppet::Error, "Puppet::Util::NetworkDevice::Chassism1000e: device not initialized #{caller.join("\n")}" unless @device
     @client = @device.transport.connect
     @device.transport
   end
