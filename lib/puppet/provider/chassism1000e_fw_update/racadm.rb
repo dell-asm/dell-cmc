@@ -1,10 +1,9 @@
+require 'fileutils'
+
 Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
   attr_accessor :device
 
   def exists?
-#    if resource[:firmwares].class == Array and resource[:firmwares].count != 1
-#      raise Puppet::Error,  "Firmwares for the chassis update can only contain 1 and only 1 hash"
-#    end
     @fw = {}
     @fw['version'] = resource[:version]
     @fw['path'] = resource[:path]
@@ -72,10 +71,21 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
     @client = @device.transport.connect
     @device.transport
   end
+
+  def copy_files
+    Puppet.debug("Copying files to TFTP share")
+    catalog_id = @fw['path'].split('/')[4]
+    tftp_share = "/var/lib/tftpboot/#{catalog_id}"
+    FileUtils.mkdir tftp_share
+    FileUtils.cp @fw['path'], tftp_share + "/firmimg.cmc"
+    FileUtils.chown_R "tomcat", "tomcat", tftp_share
+    FileUtils.chmod_R 0755, tftp_share
+    return "#{catalog_id}/firmimg.cmc"
+  end
   
   def create
     transport
-    location = "#{@fw['path']}/firmimg.cmc"
+    location = copy_files
     update_cmd = "racadm fwupdate -g -u -a #{@fw_host} -d #{location} -m cmc-standby -m cmc-active"
     begin
       Puppet.debug("Running: " + update_cmd)
