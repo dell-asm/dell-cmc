@@ -80,7 +80,6 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
     catalog_id = destination.split('/')[-2]
     tftp_share = destination.split('/')[0..-2].join('/')
     FileUtils.mkdir tftp_share
-    Puppet.debug("source: #{source}, dest: #{destination}")
     FileUtils.cp source, destination
     FileUtils.chmod_R 0755, tftp_share
     return "#{catalog_id}/firmimg.cmc"
