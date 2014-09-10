@@ -8,6 +8,7 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
     @fw['version'] = resource[:version]
     @fw['path'] = resource[:path]
     @fw_host = resource[:asm_hostname]
+    resource[:copy_to_tftp] ? @copy_to_tftp = resource[:copy_to_tftp] : nil
     current_version = get_current_version(@fw['version'])
     current_version
   end 
@@ -74,18 +75,24 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
 
   def copy_files
     Puppet.debug("Copying files to TFTP share")
-    catalog_id = @fw['path'].split('/')[4]
-    tftp_share = "/var/lib/tftpboot/#{catalog_id}"
+    source = @copy_to_tftp[0]
+    destination = @copy_to_tftp[1]
+    catalog_id = destination.split('/')[-2]
+    tftp_share = destination.split('/')[0..-2].join('/')
     FileUtils.mkdir tftp_share
-    FileUtils.cp @fw['path'], tftp_share + "/firmimg.cmc"
-    FileUtils.chown_R "tomcat", "tomcat", tftp_share
+    Puppet.debug("source: #{source}, dest: #{destination}")
+    FileUtils.cp source, destination
     FileUtils.chmod_R 0755, tftp_share
     return "#{catalog_id}/firmimg.cmc"
   end
   
   def create
     transport
-    location = copy_files
+    if @copy_to_tftp
+      location = copy_files
+    else
+      location = @fw['path']
+    end
     update_cmd = "racadm fwupdate -g -u -a #{@fw_host} -d #{location} -m cmc-standby -m cmc-active"
     begin
       Puppet.debug("Running: " + update_cmd)

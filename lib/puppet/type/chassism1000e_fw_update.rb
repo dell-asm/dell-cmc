@@ -17,6 +17,11 @@ Puppet::Type.newtype(:chassism1000e_fw_update) do
     desc "The ip address for the remote location of the firmware"
   end
 
+  newparam(:copy_to_tftp) do
+    "2 element array, [source_path,destination_path]"
+  end
+    
+
   newparam(:path) do
     desc "The path to the remote location of the firmware (on the network share)"
     validate do |value|
