@@ -18,7 +18,7 @@ Puppet::Type.newtype(:chassism1000e_fw_update) do
   end
 
   newparam(:copy_to_tftp) do
-    "2 element array, [source_path,destination_path]"
+    "2 element array, ['path to tftp share','path under tftp share']\nFor example: ['/var/lib/tftpshare','catalog1/firmware.cmc']"
   end
     
 

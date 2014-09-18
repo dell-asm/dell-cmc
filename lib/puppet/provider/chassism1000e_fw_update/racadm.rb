@@ -75,17 +75,17 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
 
   def copy_files
     Puppet.debug("Copying files to TFTP share")
-    source = @copy_to_tftp[0]
-    destination = @copy_to_tftp[1]
-    catalog_id = destination.split('/')[-2]
-    tftp_share = destination.split('/')[0..-2].join('/')
-    if File.exist? tftp_share
-      FileUtils.rm_rf tftp_share
+    tftp_share = @copy_to_tftp[0]
+    tftp_path = @copy_to_tftp[1]
+    firmware_name = tftp_path.split('/')[-1]
+    full_tftp_path = tftp_share + "/" + tftp_path
+    tftp_dir = full_tftp_path.split('/')[0..-2].join('/')
+    if !File.exist? tftp_dir
+      FileUtils.mkdir_p tftp_dir
     end
-    FileUtils.mkdir tftp_share
-    FileUtils.cp source, destination
-    FileUtils.chmod_R 0755, tftp_share
-    return "#{catalog_id}/firmimg.cmc"
+    FileUtils.cp @fw['path'], full_tftp_path
+    FileUtils.chmod_R 0755, tftp_dir
+    return tftp_path
   end
   
   def create
