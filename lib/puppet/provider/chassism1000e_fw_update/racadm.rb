@@ -79,6 +79,9 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
     destination = @copy_to_tftp[1]
     catalog_id = destination.split('/')[-2]
     tftp_share = destination.split('/')[0..-2].join('/')
+    if File.exist? tftp_share
+      FileUtils.rm_rf tftp_share
+    end
     FileUtils.mkdir tftp_share
     FileUtils.cp source, destination
     FileUtils.chmod_R 0755, tftp_share
