@@ -1,20 +1,30 @@
 class Puppet::Provider::Racadm <  Puppet::Provider
-  @@role_permissions = {"Administrator" => "0x00000fff"}
 
+  def role_permissions
+    {"Administrator" => "0x00000fff", "PowerUser" => "0x00000ed9", "GuestUser" => "0x00000001", "None" => "0x00000000"}
+  end
+
+  def enabled_bit(value)
+    (value == true || value == "Enabled") ? "1" : "0"
+  end
 
   def transport
     @device ||= Puppet::Util::NetworkDevice.current
     raise Puppet::Error, "Puppet::Util::NetworkDevice::Chassism1000e: device not initialized #{caller.join("\n")}" unless @device
   end
 
-  def ssh
-    @ssh ||= Puppet::Util::NetworkDevice.current.transport.connect
+  def connection
+    @connection ||= Puppet::Util::NetworkDevice.current.transport.connect
   end
 
-  def racadm_simple_cmd(subcommand, flags={})
+  def racadm_cmd(subcommand, flags={}, params='')
     cmd = "racadm #{subcommand}"
+    if(!params.empty?)
+      param_string = params.is_a?(Array) ? params.join(" ") : " #{params}"
+      cmd << param_string
+    end
     append_flags(cmd, flags)
-    output = ssh.exec!(cmd)
+    output = connection.exec!(cmd)
     Puppet.info("racadm #{subcommand} result: #{output}")
     parse_output_values(output)
   end
@@ -23,12 +33,12 @@ class Puppet::Provider::Racadm <  Puppet::Provider
     param_string = param_values.is_a?(Array) ? param_values.join(" ") : param_values
     cmd = "racadm config -g #{group} -o #{config_object} #{param_string}"
     append_flags(cmd, flags)
-    output = ssh.exec!(cmd)
-    Puppet.info("racadm_set_config result: #{output}")
+    output = connection.exec!(cmd)
+    Puppet.info("racadm_set_config  for group #{group} and object #{config_object} result: #{output}")
     parse_output_values(output)
   end
 
-  def racadm_get_config(group=nil, config_object=nil, flags=nil)
+  def racadm_get_config(group=nil, config_object=nil, flags={})
     cmd = "racadm getconfig"
     if(group)
       cmd << " -g #{group}"
@@ -37,7 +47,7 @@ class Puppet::Provider::Racadm <  Puppet::Provider
       cmd << " -o #{config_object}"
     end
     append_flags(cmd, flags)
-    parse_output_values(ssh.exec!(cmd))
+    parse_output_values(connection.exec!(cmd))
   end
 
   def racadm_set_niccfg(module_name, type, ip_addr=nil, ip_mask=nil, gateway=nil)
@@ -49,19 +59,21 @@ class Puppet::Provider::Racadm <  Puppet::Provider
       network_settings = " -s #{ip_addr} #{ip_mask} #{gateway}"
     end
     cmd << network_settings
-    output = ssh.exec!(cmd)
+    output = connection.exec!(cmd)
     Puppet.info("racadm_set_niccfg result for #{module_name}: #{output}")
     output
   end
 
-  def racadm_set_user(name, password, role, index)
-    permission_bits = @@role_permissions[role]
+  def racadm_set_user(name, password, role, enabled, index)
+    permission_bits = role_permissions[role]
     name_result = racadm_set_config('cfgUserAdmin', 'cfgUserAdminUserName', name, {'i' => index})
+    Puppet.err("Could not set username for user at index #{index}") unless name_result.to_s =~ /successfully/
     password_result = racadm_set_config('cfgUserAdmin', 'cfgUserAdminPassword', password, {'i' => index})
-    Puppet.err("Could not set username for user at index #{index}") unless password_result.to_s =~ /successfully/
+    Puppet.err("Could not set password for user at index #{index}") unless password_result.to_s =~ /successfully/
     role_result = racadm_set_config('cfgUserAdmin', 'cfgUserAdminPrivilege', permission_bits, {'i' => index})
     Puppet.err("Could not set privileges for user at index  #{index}") unless role_result.to_s =~ /successfully/
-    enable_result = racadm_set_config('cfgUserAdmin', 'cfgUserAdminEnable', 1, {'i' => index})
+    enabled_bit = enabled ? 1 : 0
+    enable_result = racadm_set_config('cfgUserAdmin', 'cfgUserAdminEnable', enabled_bit, {'i' => index})
     Puppet.err("Could not enable user #{index} at index") unless enable_result.to_s =~ /successfully/
   end
 
@@ -119,7 +131,13 @@ class Puppet::Provider::Racadm <  Puppet::Provider
   end
 
   def parse_output_values(output)
+    if(output.nil?)
+      return ''
+    end
     lines = output.split("\n")
+    if(lines.empty?)
+      return ''
+    end
     #If we can split by =, it's a return with key/values we can parse.  Otherwise, just return the output as is split by new line character
     if(lines.first.split("=").size > 1)
       Hash[lines.map{|str| str.split("=")}.collect{|line|
@@ -131,6 +149,8 @@ class Puppet::Provider::Racadm <  Puppet::Provider
         value = line[1].nil? ? "" : line[1].strip 
         [key, value]
         }]
+    elsif(lines.size == 1)
+      lines.first
     else
       lines
     end
