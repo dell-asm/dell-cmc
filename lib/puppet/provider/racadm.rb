@@ -83,7 +83,7 @@ class Puppet::Provider::Racadm <  Puppet::Provider
       'p' => "'#{password}'",
       'a' => type
     }
-    output = racadm_simple_cmd('deploy', flags)
+    output = racadm_cmd('deploy', flags)
     Puppet.info("racadm_set_creds result: #{output}")
   end
 
@@ -111,7 +111,7 @@ class Puppet::Provider::Racadm <  Puppet::Provider
       #The wait should be pretty short if at all for the slots other than the first one checked
       name = "#{module_type}-#{slot}"
       loop do
-        output = racadm_simple_cmd('getniccfg', {'m' => "#{name}"})
+        output = racadm_cmd('getniccfg', {'m' => "#{name}"})
         break if checks > 10 || (output['DHCP Enabled'] = '1' && output['IP Address'] != '0.0.0.0')
         checks += 1
         sleep 30
