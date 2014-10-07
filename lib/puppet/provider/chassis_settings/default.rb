@@ -174,7 +174,7 @@ Puppet::Type.type(:chassis_settings).provide(:default, :parent=>Puppet::Provider
     case resource[:power_cap_type].to_s.downcase
       when "watts"
         ""
-      when "%"
+      when "percentage"
         "Percent"
       when "btu/h"
         "BTU"
