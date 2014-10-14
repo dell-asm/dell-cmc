@@ -75,7 +75,7 @@
       case value.downcase
       when "none"
         '0'
-      when "ac"
+      when "grid"
         '1'
       when "powersupply"
         '2'
