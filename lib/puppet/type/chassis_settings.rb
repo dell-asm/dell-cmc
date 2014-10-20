@@ -89,9 +89,9 @@
   newproperty(:perf_over_redundancy) do
     desc ""
     munge do |value|
-      if(value == :true )
+      if(value == true )
       '1'
-    elsif(value==:false )
+    elsif(value== false )
       '0'
     end
     end
@@ -101,9 +101,9 @@
   newproperty(:dynamic_power_engage) do
     desc ""
     munge do |value|
-      if(value == :true )
+      if(value == true )
       '1'
-    elsif(value==:false )
+    elsif(value== false )
       '0'
     end
     end
@@ -114,9 +114,9 @@
   newproperty(:ntp_enabled) do
     desc ""
     munge do |value|
-      if(value == :true )
+      if(value == true )
         '1'
-      elsif(value==:false )
+      elsif(value == false )
         '0'
       end
     end
