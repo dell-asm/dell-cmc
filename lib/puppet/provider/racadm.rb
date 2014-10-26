@@ -17,7 +17,7 @@ class Puppet::Provider::Racadm <  Puppet::Provider
     @connection ||= Puppet::Util::NetworkDevice.current.transport.connect
   end
 
-  def racadm_cmd(subcommand, flags={}, params='')
+  def racadm_cmd(subcommand, flags={}, params='', verbose=true)
     cmd = "racadm #{subcommand}"
     if(!params.empty?)
       param_string = params.is_a?(Array) ? params.join(" ") : " #{params}"
@@ -25,7 +25,7 @@ class Puppet::Provider::Racadm <  Puppet::Provider
     end
     append_flags(cmd, flags)
     output = connection.exec!(cmd)
-    Puppet.info("racadm #{subcommand} result: #{output}")
+    Puppet.info("racadm #{subcommand} result: #{output}") if verbose
     parse_output_values(output)
   end
 
@@ -102,6 +102,8 @@ class Puppet::Provider::Racadm <  Puppet::Provider
     end
     if(network_type == :dhcp)
       wait_for_dhcp(module_type, networks)
+    else
+      wait_for_static(module_type, networks)
     end
   end
 
@@ -112,13 +114,30 @@ class Puppet::Provider::Racadm <  Puppet::Provider
       name = "#{module_type}-#{slot}"
       loop do
         output = racadm_cmd('getniccfg', {'m' => "#{name}"})
-        break if checks > 10 || (output['DHCP Enabled'] = '1' && output['IP Address'] != '0.0.0.0')
+        break if checks > 10 || (output['DHCP Enabled'] == '1' && output['IP Address'] != '0.0.0.0')
         checks += 1
         sleep 30
         Puppet.info("Waiting for DHCP address for #{name}")
       end
       if(checks == 30)
         raise "Timed out waiting for DHCP address for #{name}"
+      end
+    end
+  end
+
+  def wait_for_static(module_type, networks)
+    networks.each do |slot, value|
+      checks = 1
+      name = "#{module_type}-#{slot}"
+      loop do
+        output = racadm_cmd('getniccfg', {'m' => "#{name}"})
+        break if checks > 10 || (output['IP Address'] == value['staticNetworkConfiguration']['ipAddress'])
+        checks += 1
+        sleep 30
+        Puppet.info("Waiting for Static address for #{name}")
+      end
+      if(checks == 10)
+        raise "Timed out waiting for Static address for #{name}"
       end
     end
   end
