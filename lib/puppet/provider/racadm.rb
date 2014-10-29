@@ -77,18 +77,26 @@ class Puppet::Provider::Racadm <  Puppet::Provider
     Puppet.err("Could not enable user #{index} at index") unless enable_result.to_s =~ /successfully/
   end
 
-  def racadm_set_root_creds(password, type)
+  def racadm_set_root_creds(password, type, smnp_string=nil)
     flags = {
       'u' => 'root',
       'p' => "'#{password}'",
       'a' => type
     }
+    if !smnp_string.nil?
+      flags['v'] = ['SNMPv2', smnp_string, 'ro'].join(' ')
+    end
     output = racadm_cmd('deploy', flags)
     Puppet.info("racadm_set_creds result: #{output}")
   end
 
   def get_password(credential)
     return credential
+  end
+  
+  #This method is only used for extending this provider, in order to add custom decryption to the community string field if desired.
+  def get_community_string(string)
+    string
   end
 
   def racadm_set_addressing(module_type, network_type, networks)

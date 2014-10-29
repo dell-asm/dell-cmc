@@ -6,7 +6,7 @@ Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Rac
   def credential; end
 
   def credential=(credential)
-    racadm_set_root_creds(get_password(credential), 'switch')
+    racadm_set_root_creds(get_password(credential), 'switch', get_community_string(credential))
   end
 
   def network_type

@@ -106,11 +106,6 @@ Puppet::Type.type(:chassis_settings).provide(:default, :parent=>Puppet::Provider
     end
   end
 
-  #This method is only used for extending this provider, in order to add custom decryption to the community string field if desired.
-  def get_community_string(string)
-    string
-  end
-  
   def redundancy_policy
     racadm_get_config('cfgChassisPower', 'cfgChassisRedundancyPolicy')
   end
