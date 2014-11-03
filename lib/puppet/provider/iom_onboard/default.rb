@@ -6,7 +6,15 @@ Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Rac
   def credential; end
 
   def credential=(credential)
-    racadm_set_root_creds(get_password(credential), 'switch', get_community_string(credential))
+    resource[:slots].each do |slot|
+      pw = get_password(credential)
+      comm_string = get_community_string(credential)
+      output = racadm_set_root_creds(get_password(credential), 'switch',slot, get_community_string(credential))
+      if output =~ /ERROR/
+        Puppet.info("Connecting directly to switch's serial port to set user...")
+        set_mxl_root(slot, pw, comm_string)
+      end
+    end
   end
 
   def network_type
@@ -17,31 +25,37 @@ Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Rac
     networks = Hash[resource[:slots].zip(resource[:networks])]
     racadm_set_addressing("switch", network_type, networks)
     resource[:slots].each do |slot|
-      save_iom_config(slot)
+      send_iom_commands(slot, ['write mem'])
     end
   end
 
-  #Work around the fact that using racadm setniccfg will not set a persistent config on the switch between reboots
-  def save_iom_config(slot)
-    require 'puppet/util/ssh_iom'
-    password = get_password(@resource[:credential])
-    i = 0
-    begin
-      ip = racadm_cmd('getniccfg', {'m'=>"switch-#{slot}"}, '', false)['IP Address']
-      ssh = Puppet::Util::SshIom.new(ip, 'root', password)
-      ssh.connect
-    rescue => e
-      i += 1
-      if i < 4
-        Puppet.debug("Switch at #{ip} not ready.  Retrying in 30 seconds...")
-        sleep 30
-        retry
-      else
-        raise e
+  def set_mxl_root(slot, password, community_string)
+    commands = 
+    [
+      'configure',
+      "username root password #{password}",
+      "snmp-server community #{community_string} ro",
+      'exit',
+      'write mem'
+    ]
+    send_iom_commands(slot, commands)
+  end
+
+  def send_iom_commands(slot, cmds=[])
+    iom_prompt = /^.*[#>].*\z/
+    out = connection.command("connect switch-#{slot}", :prompt=>/Escape|console in use/)
+    if out =~ /console in use/
+      Puppet.err("Could not connect to switch-#{slot} to set root credentials.  Serial console is in use.")
+    else
+      #Need to carriage return to get things moving
+      out = connection.command("\r", :prompt=>iom_prompt)
+      out = connection.command("enable", :prompt=>iom_prompt)
+      cmds.each do |cmd|
+        out = connection.command(cmd, :prompt=>iom_prompt)
       end
+      #Terminates the console, returns connection back to cmc
+      connection.command("\c|")
+      Puppet.info("Set root credentials and community string directly on switch-#{slot}")
     end
-    out = ssh.command('write mem')
-    Puppet.info("write mem result: #{out}")
-    ssh.close
   end
 end

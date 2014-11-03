@@ -6,7 +6,9 @@ Puppet::Type.type(:idrac_onboard).provide(:default, :parent=>Puppet::Provider::R
   def credential; end
 
   def credential=(credential)
-    racadm_set_root_creds(get_password(credential), 'server')
+    resource[:slots].each do |slot|
+      racadm_set_root_creds(get_password(credential), 'server', slot)
+    end
   end
 
   def network_type

@@ -8,13 +8,10 @@ class Puppet::Provider::Racadm <  Puppet::Provider
     (value == true || value == "Enabled") ? "1" : "0"
   end
 
-  def transport
+  def connection
     @device ||= Puppet::Util::NetworkDevice.current
     raise Puppet::Error, "Puppet::Util::NetworkDevice::Chassism1000e: device not initialized #{caller.join("\n")}" unless @device
-  end
-
-  def connection
-    @connection ||= Puppet::Util::NetworkDevice.current.transport.connect
+    @device.transport
   end
 
   def racadm_cmd(subcommand, flags={}, params='', verbose=true)
@@ -24,18 +21,20 @@ class Puppet::Provider::Racadm <  Puppet::Provider
       cmd << param_string
     end
     append_flags(cmd, flags)
-    output = connection.exec!(cmd)
-    Puppet.info("racadm #{subcommand} result: #{output}") if verbose
-    parse_output_values(output)
+    output = connection.command(cmd)
+    munged_output = parse_output_values(output)
+    Puppet.info("racadm #{subcommand} result: #{munged_output}") if verbose
+    return munged_output
   end
 
   def racadm_set_config(group, config_object, param_values, flags={})
     param_string = param_values.is_a?(Array) ? param_values.join(" ") : param_values
     cmd = "racadm config -g #{group} -o #{config_object} #{param_string}"
     append_flags(cmd, flags)
-    output = connection.exec!(cmd)
-    Puppet.info("racadm_set_config  for group #{group} and object #{config_object} result: #{output}")
-    parse_output_values(output)
+    output = connection.command(cmd)
+    munged_output = parse_output_values(output)
+    Puppet.info("racadm_set_config  for group #{group} and object #{config_object} result: #{munged_output}")
+    munged_output
   end
 
   def racadm_get_config(group=nil, config_object=nil, flags={})
@@ -47,7 +46,8 @@ class Puppet::Provider::Racadm <  Puppet::Provider
       cmd << " -o #{config_object}"
     end
     append_flags(cmd, flags)
-    parse_output_values(connection.exec!(cmd))
+    output = connection.command(cmd)
+    parse_output_values(output)
   end
 
   def racadm_set_niccfg(module_name, type, ip_addr=nil, ip_mask=nil, gateway=nil)
@@ -59,9 +59,10 @@ class Puppet::Provider::Racadm <  Puppet::Provider
       network_settings = " -s #{ip_addr} #{ip_mask} #{gateway}"
     end
     cmd << network_settings
-    output = connection.exec!(cmd)
-    Puppet.info("racadm_set_niccfg result for #{module_name}: #{output}")
-    output
+    output = connection.command(cmd)
+    munged_output = parse_output_values(output)
+    Puppet.info("racadm_set_niccfg result for #{module_name}: #{munged_output}")
+    munged_output
   end
 
   def racadm_set_user(name, password, role, enabled, index)
@@ -77,17 +78,18 @@ class Puppet::Provider::Racadm <  Puppet::Provider
     Puppet.err("Could not enable user #{index} at index") unless enable_result.to_s =~ /successfully/
   end
 
-  def racadm_set_root_creds(password, type, smnp_string=nil)
+  def racadm_set_root_creds(password, type, slot, smnp_string=nil)
     flags = {
       'u' => 'root',
       'p' => "'#{password}'",
-      'a' => type
+      'm' => "#{type}-#{slot}"
     }
     if !smnp_string.nil?
       flags['v'] = ['SNMPv2', smnp_string, 'ro'].join(' ')
     end
-    output = racadm_cmd('deploy', flags)
-    Puppet.info("racadm_set_creds result: #{output}")
+    output = racadm_cmd('deploy', flags, '', false)
+    Puppet.info("racadm_set_creds result for #{type}-#{slot}: #{output}")
+    output
   end
 
   def get_password(credential)
@@ -162,6 +164,10 @@ class Puppet::Provider::Racadm <  Puppet::Provider
       return ''
     end
     lines = output.split("\n")
+    #First line contain the command sent through, which we don't want to show in logs.
+    lines.shift
+    #Last line contains the command prompt after the command has run.
+    lines.pop
     if(lines.empty?)
       return ''
     end
