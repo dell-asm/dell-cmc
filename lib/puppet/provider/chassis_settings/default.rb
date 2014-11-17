@@ -12,19 +12,19 @@ Puppet::Type.type(:chassis_settings).provide(:default, :parent=>Puppet::Provider
   end
 
   def register_dns
-    racadm_get_config('cfgLanNetworking', 'cfgDNSRegisterRac' )
+    racadm_get_config('cfgLANNetworking', 'cfgDNSRegisterRac' )
   end
   
   def register_dns=(register)
-    racadm_set_config('cfgLanNetworking', 'cfgDNSRegisterRac', enabled_bit(register) )
+    racadm_set_config('cfgLANNetworking', 'cfgDNSRegisterRac', enabled_bit(register) )
   end
 
   def dns_name
-    racadm_get_config('cfgLanNetworking', 'cfgDNSRacName' )
+    racadm_get_config('cfgLANNetworking', 'cfgDNSRacName' )
   end
 
   def dns_name=(dns_name)
-    racadm_set_config('cfgLanNetworking', 'cfgDNSRacName', dns_name)
+    racadm_set_config('cfgLANNetworking', 'cfgDNSRacName', dns_name)
   end
 
   def datacenter
@@ -123,7 +123,7 @@ Puppet::Type.type(:chassis_settings).provide(:default, :parent=>Puppet::Provider
   end
 
   def dynamic_power_engage
-    racadm_get_config('cfgChassisPower', 'cfgChassisPerformanceOverRedundancy')
+    racadm_get_config('cfgChassisPower', 'cfgChassisDynamicPSUEngagementEnable')
   end
 
   def dynamic_power_engage=(engage_enable)
