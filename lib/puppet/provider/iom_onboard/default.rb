@@ -7,6 +7,7 @@ Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Rac
 
   def credential=(credential)
     resource[:slots].each do |slot|
+      next if is_passthrough(slot)
       pw = get_password(credential)
       comm_string = get_community_string(credential)
       output = racadm_set_root_creds(get_password(credential), 'switch',slot, get_community_string(credential))
@@ -15,6 +16,16 @@ Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Rac
         set_mxl_root(slot, pw, comm_string)
       end
     end
+  end
+
+  def is_passthrough(slot)
+    output = racadm_cmd('getioinfo', {}).flatten
+    switch_info = ''
+    output.each do |switch_out|
+      switch_info = ( switch_out.scan(/^Switch-#{slot}.*?$/m) || []).flatten.first
+      break if !switch_info.nil?
+    end
+    switch_info.match(/10GBE ETHERNET MODULE|PASS-THROUGH/)
   end
 
   def network_type
