@@ -1,4 +1,4 @@
-# Chassism1000e
+# Cmc
 
 #### Table of Contents
 
@@ -15,7 +15,7 @@
 ## Overview
 
 _This is a work in progress!_
-Chassism1000e is a puppet module for managing the Dell m1000e chassis.  Extending Puppet's "Device" capability.
+cmc is a puppet module for managing various Dell chassis.  Extending Puppet's "Device" capability.
 
 ## Module Description
 
@@ -35,7 +35,7 @@ The following class would create an appropriate configuration to run the puppet 
 
 ```puppet
     $hostname = 'localhost'
-    chassism1000e::config { $hostname:
+    cmc::config { $hostname:
       username => 'root',
       password => 'letmeinnow',
       port     => '22',

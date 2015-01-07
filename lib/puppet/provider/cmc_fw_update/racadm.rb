@@ -1,6 +1,6 @@
 require 'fileutils'
 
-Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
+Puppet::Type.type(:cmc_fw_update).provide(:racadm) do
   attr_accessor :device
 
   def exists?
@@ -50,7 +50,7 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
       output = @client.exec!('racadm fwupdate -s')
     rescue Puppet::ExecutionFailure => e
       Puppet.debug("#get_update status had error executing -> #{e.inspect}")
-      raise Puppet::Error, "Puppet::Util::Network::Device::Chassism1000e: device failed"
+      raise Puppet::Error, "Puppet::Util::Network::Device::Cmc: device failed"
     end
     if output.include? "Ready for firmware update"
       @client.close
@@ -68,7 +68,7 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
 
   def transport
     @device ||= Puppet::Util::NetworkDevice.current
-    raise Puppet::Error, "Puppet::Util::NetworkDevice::Chassism1000e: device not initialized #{caller.join("\n")}" unless @device
+    raise Puppet::Error, "Puppet::Util::NetworkDevice::Cmc: device not initialized #{caller.join("\n")}" unless @device
     @client = @device.transport.connect
     @device.transport
   end
@@ -101,7 +101,7 @@ Puppet::Type.type(:chassism1000e_fw_update).provide(:racadm) do
       output = @client.exec!(update_cmd)
       Puppet.debug "#{output}"
     rescue Puppet::ExecutionFailure => e
-      Puppet.debug("#Chassism1000e_fw_update had an error -> #{e.inspect}")
+      Puppet.debug("#cmc_fw_update had an error -> #{e.inspect}")
     end
     @client.close
     sleep 20

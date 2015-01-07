@@ -1,6 +1,6 @@
-# == Class: chassism1000e
+# == Class: cmc
 #
-# Full description of class chassism1000e here.
+# Full description of class cmc here.
 #
 # === Parameters
 #
@@ -23,7 +23,7 @@
 #
 # === Examples
 #
-#  class { chassism1000e:
+#  class { cmc:
 #    servers => [ 'pool.ntp.org', 'ntp.local.company.com' ],
 #  }
 #
@@ -35,12 +35,12 @@
 #
 # Copyright 2014 Your name here, unless otherwise noted.
 #
-class chassism1000e (
-  $owner    = $chassism1000e::params::owner,
-  $group    = $chassism1000e::params::group,
-  $provider = $chassism1000e::params::provider,
-  $mode     = $chassism1000e::params::mode
-) inherits chassism1000e::params {
+class cmc (
+  $owner    = $cmc::params::owner,
+  $group    = $cmc::params::group,
+  $provider = $cmc::params::provider,
+  $mode     = $cmc::params::mode
+) inherits cmc::params {
 
   if !defined(File["${settings::confdir}/device"]) {
     file { "${settings::confdir}/device":

@@ -10,7 +10,7 @@ class Puppet::Provider::Racadm <  Puppet::Provider
 
   def connection
     @device ||= Puppet::Util::NetworkDevice.current
-    raise Puppet::Error, "Puppet::Util::NetworkDevice::Chassism1000e: device not initialized #{caller.join("\n")}" unless @device
+    raise Puppet::Error, "Puppet::Util::NetworkDevice::Cmc: device not initialized #{caller.join("\n")}" unless @device
     @device.transport
   end
 

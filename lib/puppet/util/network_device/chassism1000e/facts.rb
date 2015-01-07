@@ -1,22 +1,10 @@
+#
+# This class is only here to ensure existing code specifically pointing to device type chassism1000e doesn't break
+# Module now refers to more generic name instead of specifically to chassism1000e.
+#
+
 require 'puppet/util/network_device/chassism1000e'
+require 'puppet/util/network_device/cmc/facts'
 
-class Puppet::Util::NetworkDevice::Chassism1000e::Facts
-
-  attr_reader :client
-
-  def initialize(client)
-    @client = client
-  end
-
-  def retrieve
-    @facts = {}
-    [ 'getchassisname',
-      'getassettag'
-    ].each do |k|
-      @facts[k] = @client.exec!("racadm #{k}").chop
-    end
-    @facts[:url] = @url
-    @facts
-  end
-
+class Puppet::Util::NetworkDevice::Chassism1000e::Facts < Puppet::Util::NetworkDevice::Cmc::Facts
 end

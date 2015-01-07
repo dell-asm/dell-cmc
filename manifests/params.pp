@@ -1,5 +1,5 @@
-#Paramaters class for chassism1000e
-class chassism1000e::params {
+#Paramaters class for cmc
+class cmc::params {
   $owner    = 'pe-puppet'
   $group    = 'pe-puppet'
   $provider = 'gem'

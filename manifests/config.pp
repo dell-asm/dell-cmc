@@ -1,14 +1,14 @@
-# Defined Resource Type: chassism1000e::config
+# Defined Resource Type: cmc::config
 #
-#   This defined resource type will create an chassism1000e device configuration file
+#   This defined resource type will create an cmc device configuration file
 #     to be used with Puppet.
 #
 # Parameters:
 #
-# [*username*] - The username used to connect to the chassism1000e device
-# [*password*] - The password used to connect to the chassism1000e device
-# [*url*]      - The url to the chassism1000e device. DO NOT INCLUDE https://
-# [*target*]   - The path to the chassism1000e configuration file we are creating
+# [*username*] - The username used to connect to the cmc device
+# [*password*] - The password used to connect to the cmc device
+# [*url*]      - The url to the cmc device. DO NOT INCLUDE https://
+# [*target*]   - The path to the cmc configuration file we are creating
 #
 # Actions:
 #
@@ -16,15 +16,15 @@
 #
 # Sample Usage:
 #
-#  chassism1000e::config { 'bigip':
+#  cmc::config { 'bigip':
 #    username  => 'admin',
 #    password  => 'password',
-#    url       => 'chassism1000e.puppetlabs.lan',
+#    url       => 'cmc.puppetlabs.lan',
 #    target    => '/etc/puppetlabs/puppet/device/bigip.conf
 #  }
 #
 
-define chassism1000e::config(
+define cmc::config(
   $username = 'root',
   $password = 'root',
   $url      = $name,
@@ -32,17 +32,17 @@ define chassism1000e::config(
   $target   = "${settings::confdir}/defice/${name}.conf"
   ) {
   
-  include chassism1000e::params
+  include cmc::params
   
-  $owner = $chassism1000e::params::owner
-  $group = $chassism1000e::params::group
-  $mode  = $chassism1000e::params::mode
+  $owner = $cmc::params::owner
+  $group = $cmc::params::group
+  $mode  = $cmc::params::mode
 
   file { $target:
     ensure  => present,
     owner   => $owner,
     group   => $group,
     mode    => $mode,
-    content => template('chassism1000e/config.erb'),
+    content => template('cmc/config.erb'),
   }
 }
