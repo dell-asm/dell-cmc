@@ -5,6 +5,7 @@ Puppet::Type.type(:cmc_fw_update).provide(:racadm) do
 
   def exists?
     @fw = {}
+    @partitions = []
     @fw['version'] = resource[:version]
     @fw['path'] = resource[:path]
     @fw_host = resource[:asm_hostname]
@@ -26,8 +27,10 @@ Puppet::Type.type(:cmc_fw_update).provide(:racadm) do
     output.each_line do |l|
       if l.start_with? 'Primary CMC Version'
         versions[:primary] = l.split('=')[1].gsub(' ','').chop
+        @partitions << '-m cmc-active'
       elsif l.start_with? 'Standby CMC Version'
         versions[:standby] = l.split('=')[1].gsub(' ','').chop
+        @partitions << '-m cmc-standby'
         break
       end
     end
@@ -95,7 +98,7 @@ Puppet::Type.type(:cmc_fw_update).provide(:racadm) do
     else
       location = @fw['path']
     end
-    update_cmd = "racadm fwupdate -g -u -a #{@fw_host} -d #{location} -m cmc-standby -m cmc-active"
+    update_cmd = "racadm fwupdate -g -u -a #{@fw_host} -d #{location} #{@partitions.join(' ')}"
     begin
       Puppet.debug("Running: " + update_cmd)
       output = @client.exec!(update_cmd)
