@@ -41,7 +41,7 @@ Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Rac
   end
 
   def set_mxl_root(slot, password, community_string)
-    commands = 
+    commands =
     [
       'configure',
       "username root password #{password}",
@@ -53,7 +53,7 @@ Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Rac
   end
 
   def send_iom_commands(slot, cmds=[])
-    iom_prompt = /^.*[#>].*\z/
+    iom_prompt = /^.*[#>].*\z|Password:/
     out = connection.command("connect switch-#{slot}", :prompt=>/Escape|console in use/)
     if out =~ /console in use/
       Puppet.err("Could not connect to switch-#{slot} to set root credentials.  Serial console is in use.")
@@ -61,12 +61,16 @@ Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Rac
       #Need to carriage return to get things moving
       out = connection.command("\r", :prompt=>iom_prompt)
       out = connection.command("enable", :prompt=>iom_prompt)
-      cmds.each do |cmd|
-        out = connection.command(cmd, :prompt=>iom_prompt)
+      if out =~ /Password:/
+        Puppet.err("Could not connect to switch-#{slot} to set root credentials.  Enable password is set")
+      else
+        cmds.each do |cmd|
+          out = connection.command(cmd, :prompt=>iom_prompt)
+        end
+        Puppet.info("Set root credentials and community string directly on switch-#{slot}")
       end
       #Terminates the console, returns connection back to cmc
       connection.command("\c|")
-      Puppet.info("Set root credentials and community string directly on switch-#{slot}")
     end
   end
 end
