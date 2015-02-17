@@ -2,7 +2,7 @@ require 'puppet/util/network_device/transport/ssh'
 require 'net/ssh'
 require 'uri'
 
-module Puppet::Util::NetworkDevice::Cmc 
+module Puppet::Util::NetworkDevice::Cmc
   class Transport < Puppet::Util::NetworkDevice::Transport::Ssh
     attr_reader :hostname, :port, :username, :password
     attr_accessor :user, :password, :host, :port
@@ -32,6 +32,23 @@ module Puppet::Util::NetworkDevice::Cmc
          else
           raise e
          end
+      end
+    end
+
+    def command(cmd, options = {})
+      begin
+        attempts ||= 1
+        super
+      rescue Net::SSH::Disconnect => e
+        if attempts > 3
+          raise e
+        else
+          attempts += 1
+          Puppet.err("SSH Connection was closed by remote host. Attempting to reconnect in 5 seconds...")
+          sleep 5
+          connect
+          retry
+        end
       end
     end
   end
