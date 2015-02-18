@@ -4,8 +4,8 @@ class Puppet::Util::NetworkDevice::Cmc::Facts
 
   attr_reader :client
 
-  def initialize(client)
-    @client = client
+  def initialize(transport)
+    @transport = transport
   end
 
   def retrieve
@@ -13,7 +13,9 @@ class Puppet::Util::NetworkDevice::Cmc::Facts
     [ 'getchassisname',
       'getassettag'
     ].each do |k|
-      @facts[k] = @client.exec!("racadm #{k}").chop
+      output = @transport.command("racadm #{k}")
+      #Output comes back something like "racadm getassettag\n00000\n$ ", so it needs to be parsed out
+      @facts[k] = output.split("\n")[1..-2].first
     end
     @facts[:url] = @url
     @facts
