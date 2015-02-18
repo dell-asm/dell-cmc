@@ -3,7 +3,7 @@ require 'puppet/util/network_device/cmc/transport'
 require 'puppet/util/network_device/cmc/facts'
 require '/etc/puppetlabs/puppet/modules/asm_lib/lib/security/encode'
 
-class Puppet::Util::NetworkDevice::Cmc::Device 
+class Puppet::Util::NetworkDevice::Cmc::Device
 
   attr_accessor :url, :transport
 
@@ -25,7 +25,7 @@ class Puppet::Util::NetworkDevice::Cmc::Device
   end
 
   def facts
-    @facts ||= Puppet::Util::NetworkDevice::Cmc::Facts.new(@client)
+    @facts ||= Puppet::Util::NetworkDevice::Cmc::Facts.new(@transport)
     facts = @facts.retrieve
     facts
   end
