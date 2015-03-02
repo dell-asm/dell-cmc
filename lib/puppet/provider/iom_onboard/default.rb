@@ -25,7 +25,8 @@ Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Rac
       switch_info = ( switch_out.scan(/^Switch-#{slot}.*?$/m) || []).flatten.first
       break if !switch_info.nil?
     end
-    switch_info.match(/10GBE ETHERNET MODULE|PASS-THROUGH/)
+    #Bypass configuration for pass-through and IOM in stacking mode with "Member role"
+    switch_info.match(/10GBE ETHERNET MODULE|PASS-THROUGH|Member/)
   end
 
   def network_type
