@@ -50,27 +50,47 @@ Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Rac
       'write mem'
     ]
     send_iom_commands(slot, commands)
+    Puppet.info("Set root credentials and community string directly on switch-#{slot}")
   end
 
   def send_iom_commands(slot, cmds=[])
-    iom_prompt = /^.*[#>].*\z|Password:/
+    iom_prompt = /^.*[#>].*\z|Password:|Press RETURN/i
     out = connection.command("connect switch-#{slot}", :prompt=>/Escape|console in use/)
     if out =~ /console in use/
-      Puppet.err("Could not connect to switch-#{slot} to set root credentials.  Serial console is in use.")
+      Puppet.err("Could not connect to switch-#{slot}. Serial console is in use.")
     else
       #Need to carriage return to get things moving
-      out = connection.command("\r", :prompt=>iom_prompt)
-      out = connection.command("enable", :prompt=>iom_prompt)
+      out = enter_privileged_exec(iom_prompt, slot)
       if out =~ /Password:/
-        Puppet.err("Could not connect to switch-#{slot} to set root credentials.  Enable password is set")
+        Puppet.err("Could not connect to switch-#{slot}.  Enable password should not be set")
       else
         cmds.each do |cmd|
           out = connection.command(cmd, :prompt=>iom_prompt)
         end
-        Puppet.info("Set root credentials and community string directly on switch-#{slot}")
       end
       #Terminates the console, returns connection back to cmc
       connection.command("\c|")
+    end
+  end
+
+  #Sometimes entering privileged exec mode fails for some reason.  This method will just retry it a couple times.
+  def enter_privileged_exec(prompt, slot)
+    begin
+      attempts ||= 1
+      connection.command("\r", :prompt=>prompt)
+      out = connection.command("enable", :prompt=>prompt)
+      if out !~ /#/
+        raise 'Could not enter privileged exec mode.'
+      end
+    rescue Exception => e
+      Puppet.debug("Could not enter privileged exec mode on switch-#{slot}.  Retrying...")
+      if attempts > 3
+        Puppet.err("Leaving serial console for switch-#{slot} because couldn't enter privileged exec mode. Some configuration may be skipped")
+      else
+        attempts += 1
+        sleep 1
+        retry
+      end
     end
   end
 end
