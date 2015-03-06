@@ -17,6 +17,6 @@ Puppet::Type.type(:idrac_onboard).provide(:default, :parent=>Puppet::Provider::R
 
   def network_type=(network_type)
     networks = Hash[resource[:slots].zip(resource[:networks])]
-    racadm_set_addressing("server", network_type, networks)
+    set_networks("server", network_type, networks)
   end
 end

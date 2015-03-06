@@ -101,24 +101,54 @@ class Puppet::Provider::Racadm <  Puppet::Provider
     string
   end
 
-  def racadm_set_addressing(module_type, network_type, networks)
+  def set_networks(module_type, network_type, networks)
+    slots_to_check = {}
+    errored = {}
     networks.each do |slot, network|
-      if(network_type == :dhcp)
-        output = racadm_set_niccfg("#{module_type}-#{slot}", network_type)
-      elsif(network_type == :static)
-        network_obj = network['staticNetworkConfiguration']
-        output = racadm_set_niccfg("#{module_type}-#{slot}",network_type, network_obj['ipAddress'], network_obj['subnet'], network_obj['gateway'])
+      result = set_network("#{module_type}-#{slot}", network, network_type)
+      if result =~ /ERROR/
+        errored[slot] = network
+      else
+        slots_to_check[slot] = network
       end
     end
+
+    errored.each do |slot, network|
+      attempts ||= 0
+      Puppet.debug("Could not set #{network_type} network for #{module_type}-#{slot}.  Retrying in 30 seconds...")
+      sleep 30
+      if (attempts += 1) < 6
+        result = set_network("#{module_type}-#{slot}", network, network_type)
+        if result =~ /ERROR/
+          redo
+        else
+          slots_to_check[slot] = network
+        end
+      else
+        Puppet.error("Networking cannot be set for #{module_type}-#{slot}.")
+      end
+    end
+
     if(network_type == :dhcp)
-      wait_for_dhcp(module_type, networks)
+      wait_for_dhcp(module_type, slots_to_check)
     else
-      wait_for_static(module_type, networks)
+      wait_for_static(module_type, slots_to_check)
     end
   end
 
-  def wait_for_dhcp(module_type, networks)
-    networks.each do |slot, value|
+  def set_network(module_name, network, network_type)
+    if(network_type == :dhcp)
+      output = racadm_set_niccfg(module_name, network_type)
+    elsif(network_type == :static)
+      network_obj = network['staticNetworkConfiguration']
+      output = racadm_set_niccfg(module_name, network_type, network_obj['ipAddress'], network_obj['subnet'], network_obj['gateway'])
+    end
+    output
+  end
+
+
+  def wait_for_dhcp(module_type, slots_to_check)
+    slots_to_check.each do |slot, value|
       checks = 1
       #The wait should be pretty short if at all for the slots other than the first one checked
       name = "#{module_type}-#{slot}"
@@ -135,8 +165,8 @@ class Puppet::Provider::Racadm <  Puppet::Provider
     end
   end
 
-  def wait_for_static(module_type, networks)
-    networks.each do |slot, value|
+  def wait_for_static(module_type, slots_to_check)
+    slots_to_check.each do |slot, value|
       checks = 1
       name = "#{module_type}-#{slot}"
       loop do
@@ -146,7 +176,7 @@ class Puppet::Provider::Racadm <  Puppet::Provider
         sleep 30
         Puppet.info("Waiting for Static address for #{name}")
       end
-      if(checks == 10)
+      if(checks > 10)
         raise "Timed out waiting for Static address for #{name}"
       end
     end

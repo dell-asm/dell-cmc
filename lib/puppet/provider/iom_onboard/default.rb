@@ -35,7 +35,7 @@ Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Rac
 
   def network_type=(network_type)
     networks = Hash[resource[:slots].zip(resource[:networks])]
-    racadm_set_addressing("switch", network_type, networks)
+    set_networks("switch", network_type, networks)
     resource[:slots].each do |slot|
       send_iom_commands(slot, ['write mem'])
     end
