@@ -112,7 +112,8 @@ class Puppet::Provider::Racadm <  Puppet::Provider
         slots_to_check[slot] = network
       end
     end
-
+    # Sometimes setting the addressing does not work when reset to factory defaults, so we want to retry a few times.
+    # Trying to set it the first time seems to trigger it to be in a better state a minute or 2 later.
     errored.each do |slot, network|
       attempts ||= 0
       Puppet.debug("Could not set #{network_type} network for #{module_type}-#{slot}.  Retrying in 30 seconds...")
@@ -150,17 +151,21 @@ class Puppet::Provider::Racadm <  Puppet::Provider
   def wait_for_dhcp(module_type, slots_to_check)
     slots_to_check.each do |slot, value|
       checks = 1
+      ip_address = ''
       #The wait should be pretty short if at all for the slots other than the first one checked
       name = "#{module_type}-#{slot}"
       loop do
         output = racadm_cmd('getniccfg', {'m' => "#{name}"})
-        break if checks > 10 || (output['DHCP Enabled'] == '1' && output['IP Address'] != '0.0.0.0')
+        ip_address = output['IP Address']
+        break if checks > 10 || (output['DHCP Enabled'] == '1' && ip_address != '0.0.0.0')
         checks += 1
         sleep 30
         Puppet.info("Waiting for DHCP address for #{name}")
       end
-      if(checks == 30)
+      if checks == 10
         raise "Timed out waiting for DHCP address for #{name}"
+      else
+        wait_for_connectivity(ip_address, name)
       end
     end
   end
@@ -168,18 +173,39 @@ class Puppet::Provider::Racadm <  Puppet::Provider
   def wait_for_static(module_type, slots_to_check)
     slots_to_check.each do |slot, value|
       checks = 1
+      ip_address = ''
       name = "#{module_type}-#{slot}"
       loop do
         output = racadm_cmd('getniccfg', {'m' => "#{name}"})
-        break if checks > 10 || (output['IP Address'] == value['staticNetworkConfiguration']['ipAddress'])
+        ip_address = output['IP Address']
+        break if checks > 10 || (ip_address == value['staticNetworkConfiguration']['ipAddress'])
         checks += 1
         sleep 30
         Puppet.info("Waiting for Static address for #{name}")
       end
-      if(checks > 10)
+      if checks > 10
         raise "Timed out waiting for Static address for #{name}"
+      else
+        wait_for_connectivity(ip_address, name)
       end
     end
+  end
+
+  def wait_for_connectivity(ip_address, name)
+    checks = 1
+    loop do
+      Puppet.info("Waiting for connectivity to #{name} at #{ip_address}...")
+      output = racadm_cmd('ping', {}, ip_address)
+      break if checks > 10 || output.find{|line| line =~ /1 packets received/}
+      checks += 1
+      sleep 15
+    end
+    if checks > 10
+      raise "Could not ping #{ip_address}"
+    else
+      Puppet.info("#{name} is now reachable at #{ip_address}")
+    end
+
   end
 
   def append_flags(cmd, flag_hash)
