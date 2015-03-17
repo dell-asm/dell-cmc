@@ -25,9 +25,9 @@ module Puppet::Util::NetworkDevice::Cmc
         @client = @ssh
       rescue => e
         i += 1
-         if i < 6
-           Puppet.debug("Puppet::Util::NetworkDevice::Cmc::Transport failed to connect. retrying in 10 seconds...")
-           sleep 10
+         if i < 7
+           Puppet.debug("Puppet::Util::NetworkDevice::Cmc::Transport failed to connect. retrying in 30 seconds...")
+           sleep 30
            retry
          else
           raise e
