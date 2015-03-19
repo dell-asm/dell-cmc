@@ -11,17 +11,32 @@ class Puppet::Util::NetworkDevice::Cmc::Device
     @url = URI.parse(url)
     @option = option
     @url.port = 22 unless @url.port
+    @query = Hash.new([])
+    @query = CGI.parse(@url.query) if @url.query
 
     Puppet.debug("Puppet::Device::Cmc: connecting to Dell Chassis device #{@url.host} on port #{@url.port}")
 
-    begin
-      unencrypted_password = URI.decode(asm_decrypt(@url.password))
-    rescue Exception => e
-      raise Puppet::Error, "Puppet::Device::Cmc: Error decrypting the password: #{e.inspect}"
-    end
-    @transport ||=  Puppet::Util::NetworkDevice::Cmc::Transport.new(@url.host, @url.port, @url.user, unencrypted_password)
+    user, password = get_credentials
+
+    @transport ||=  Puppet::Util::NetworkDevice::Cmc::Transport.new(@url.host, @url.port, user, password)
+
     @client = @transport.connect
     @client
+  end
+
+  def get_credentials
+    user = @url.user
+    password = @url.password
+    password = URI.decode(asm_decrypt(password)) if password
+
+    if id = @query.fetch('credential_id', []).first
+      require 'asm/cipher'
+      cred = ASM::Cipher.decrypt_credential(id)
+      user = cred.username
+      password = cred.password
+    end
+
+    return user, password
   end
 
   def facts
@@ -29,5 +44,4 @@ class Puppet::Util::NetworkDevice::Cmc::Device
     facts = @facts.retrieve
     facts
   end
-
 end
