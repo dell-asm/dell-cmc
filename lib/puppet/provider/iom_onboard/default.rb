@@ -13,6 +13,7 @@ Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Rac
       output = racadm_set_root_creds(get_password(credential), 'switch',slot, get_community_string(credential))
       if output =~ /ERROR/
         Puppet.info("Connecting directly to switch's serial port to set user...")
+        check_disable_bmp_mode(slot)
         set_mxl_root(slot, pw, comm_string)
       end
     end
@@ -41,6 +42,13 @@ Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Rac
     end
   end
 
+  def check_disable_bmp_mode(slot)
+    Puppet.debug("Disabling the BMP mode and ensure reload-type is configured to normal")
+    send_iom_commands(slot,['\r', '\r', 'A\r', 'yes'],true)
+    commands = [ 'configure', 'reload-type normal-reload', 'exit', 'write mem']
+    send_iom_commands(slot,commands)
+  end
+
   def set_mxl_root(slot, password, community_string)
     commands =
     [
@@ -54,19 +62,22 @@ Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Rac
     Puppet.info("Set root credentials and community string directly on switch-#{slot}")
   end
 
-  def send_iom_commands(slot, cmds=[])
+  def send_iom_commands(slot, cmds=[], skip_privilege_mode=false)
     iom_prompt = /^.*[#>].*\z|Password:|Press RETURN/i
+    iom_prompt = /.*/ if skip_privilege_mode
     out = connection.command("connect switch-#{slot}", :prompt=>/Escape|console in use/)
     if out =~ /console in use/
       Puppet.err("Could not connect to switch-#{slot}. Serial console is in use.")
     else
       #Need to carriage return to get things moving
-      out = enter_privileged_exec(iom_prompt, slot)
+      out = enter_privileged_exec(iom_prompt, slot) if skip_privilege_mode == false
       if out =~ /Password:/
         Puppet.err("Could not connect to switch-#{slot}.  Enable password should not be set")
       else
         cmds.each do |cmd|
-          out = connection.command(cmd, :prompt=>iom_prompt)
+          ( skip_privilege_mode and cmd.match(/A/)) ? new_iom_prompt = /yes|>|#|.+/ : new_iom_prompt = iom_prompt
+          out = connection.command(cmd, :prompt=>new_iom_prompt)
+          sleep(5) if skip_privilege_mode == true
         end
       end
       #Terminates the console, returns connection back to cmc
@@ -76,9 +87,10 @@ Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Rac
 
   #Sometimes entering privileged exec mode fails for some reason.  This method will just retry it a couple times.
   def enter_privileged_exec(prompt, slot)
+    Puppet.debug("Inside enter_privileged_exec")
     begin
       attempts ||= 1
-      connection.command("\r", :prompt=>prompt)
+      connection.command("\r", :prompt=>prompt, :timeout => 10)
       out = connection.command("enable", :prompt=>prompt)
       if out !~ /#/
         raise 'Could not enter privileged exec mode.'
