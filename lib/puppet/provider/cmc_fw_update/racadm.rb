@@ -39,7 +39,7 @@ Puppet::Type.type(:cmc_fw_update).provide(:racadm) do
       end
     end
     versions[:primary] = primary
-    versions[:standby] = standby if standby[:version] != nil
+    versions[:standby] = standby if standby[:version] != nil && standby[:version] != 'N/A'
     Puppet.debug("versions: #{versions}")
     versions.each do |k,v|
       if v[:version] != fw_version
