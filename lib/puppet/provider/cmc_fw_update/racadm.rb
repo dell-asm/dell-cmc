@@ -91,26 +91,41 @@ Puppet::Type.type(:cmc_fw_update).provide(:racadm) do
     @device.transport
   end
 
+  def new_binary_name
+    random_string = (0...8).map { (65 + rand(26)).chr }.join
+    "CMC_#{random_string }.EXE"
+  end
+
+  def rename_binary
+    tftp_share = File.dirname(@fw['path'])
+    new_filename = new_binary_name
+    @new_file = File.join(tftp_share, new_filename)
+    Puppet.debug("Original file location: #{@fw['path']}")
+    FileUtils.cp @fw['path'], @new_file
+    FileUtils.chmod_R 0755, @new_file
+    new_filename
+  end
+
+  def remove_renamed_file
+    FileUtils.remove(@new_file)
+  end
+
   def copy_files
-    Puppet.debug("Copying files to TFTP share")
+    Puppet.debug("Copying files to TFTP share and shortening filename")
     tftp_share = @copy_to_tftp[0]
-    tftp_path = @copy_to_tftp[1]
-    firmware_name = tftp_path.split('/')[-1]
-    full_tftp_path = tftp_share + "/" + tftp_path
-    tftp_dir = full_tftp_path.split('/')[0..-2].join('/')
-    if !File.exist? tftp_dir
-      FileUtils.mkdir_p tftp_dir
-    end
-    FileUtils.cp @fw['path'], full_tftp_path
-    FileUtils.chmod_R 0755, tftp_dir
-    return tftp_path
+    new_filename = new_binary_name
+    @new_file = tftp_share + "/" + new_filename
+    Puppet.debug("Original file location: #{@fw['path']}")
+    FileUtils.cp @fw['path'], @new_file
+    FileUtils.chmod_R 0755, @new_file
+    new_filename
   end
 
   def create
     if @copy_to_tftp
       location = copy_files
     else
-      location = @fw['path']
+      location = rename_binary
     end
     modules = ''
     cmcs = []
@@ -151,6 +166,7 @@ Puppet::Type.type(:cmc_fw_update).provide(:racadm) do
         retries += 1
       end
     end
+    remove_renamed_file
     true
   end
 
