@@ -3,6 +3,9 @@ require 'fileutils'
 Puppet::Type.type(:cmc_fw_update).provide(:racadm) do
   attr_accessor :device
 
+  UNZIP = %x[which unzip].chop
+  FIND = %x[which find].chop
+
   def exists?
     @fw = {}
     @partitions = []
@@ -93,14 +96,13 @@ Puppet::Type.type(:cmc_fw_update).provide(:racadm) do
 
   def new_binary_name
     random_string = (0...8).map { (65 + rand(26)).chr }.join
-    "CMC_#{random_string }.EXE"
+    "CMC_#{random_string }.bin"
   end
 
   def rename_binary
     tftp_share = File.dirname(@fw['path'])
     new_filename = new_binary_name
     @new_file = File.join(tftp_share, new_filename)
-    Puppet.debug("Original file location: #{@fw['path']}")
     FileUtils.cp @fw['path'], @new_file
     FileUtils.chmod_R 0755, @new_file
     new_filename
@@ -115,59 +117,87 @@ Puppet::Type.type(:cmc_fw_update).provide(:racadm) do
     tftp_share = @copy_to_tftp[0]
     new_filename = new_binary_name
     @new_file = tftp_share + "/" + new_filename
-    Puppet.debug("Original file location: #{@fw['path']}")
     FileUtils.cp @fw['path'], @new_file
     FileUtils.chmod_R 0755, @new_file
     new_filename
   end
 
-  def create
-    if @copy_to_tftp
-      location = copy_files
-    else
-      location = rename_binary
-    end
-    modules = ''
-    cmcs = []
-    @partitions.each do |partition|
-      partition[:status] == 'primary' ? cmc = 'cmc-active' : cmc = 'cmc-standby'
-      modules << "-m #{cmc} "
-      cmcs << cmc
-    end
-    # @partitions.each_with_index do |partition, index|
-    transport
-    update_cmd = "racadm fwupdate -g -u -a #{@fw_host} -d #{location} #{modules}"
-    Puppet.debug('Running: ' + update_cmd)
+  def unpack_binary
+    dir = Dir.mktmpdir
     begin
-      output = @client.exec!(update_cmd)
-      Puppet.debug "#{output}"
-    rescue Puppet::ExecutionFailure => e
-      Puppet.debug("#cmc_fw_update had an error -> #{e.inspect}")
+      %x[#{UNZIP} -d #{dir} #{@fw['path']}]
+      path_to_zip = %x[#{FIND} #{dir}/payload -name '*.zip']
+      %x[cd #{dir}/payload && #{UNZIP} #{File.basename(path_to_zip)}]
+      binary = %x[#{FIND} #{dir}/payload -name '*.bin'].chop
+      {
+          :tmpdir => dir,
+          :binary => binary
+      }
+    rescue
+      FileUtils.remove_entry_secure dir
+      raise Puppet::Error, "Unable to un-package binary: #{@fw['path']}"
     end
-    @client.close
-    sleep 20
-    status = nil
-    cmcs.each do |cmc|
-      until status == "ready"
-        status = update_status?(cmc)
-        sleep 40
+  end
+
+  def create
+    begin
+      Puppet.debug("Original file location: #{@fw['path']}")
+      if @fw['path'].downcase.end_with? '.exe'
+        unpack_info = unpack_binary
+        @fw['path'] = unpack_info[:binary]
       end
-      Puppet.debug("CMC updated for partition: #{cmc}")
-    end
-    @partitions.each do |partition|
-      retries = 0
-      up_to_date = false
-      until up_to_date
-        if retries > 20 # 10 minute wait forever
-          raise Puppet::Error, "Firmware version not updated after 8 minutes for #{partition[:name]}"
+      unpack_info ||= nil
+      if @copy_to_tftp
+        location = copy_files
+      else
+        location = rename_binary
+      end
+      modules = ''
+      cmcs = []
+      @partitions.each do |partition|
+        partition[:status] == 'primary' ? cmc = 'cmc-active' : cmc = 'cmc-standby'
+        modules << "-m #{cmc} "
+        cmcs << cmc
+      end
+      # @partitions.each_with_index do |partition, index|
+      transport
+      update_cmd = "racadm fwupdate -g -u -a #{@fw_host} -d #{location} #{modules}"
+      Puppet.debug('Running: ' + update_cmd)
+      begin
+        output = @client.exec!(update_cmd)
+        Puppet.debug "#{output}"
+      rescue Puppet::ExecutionFailure => e
+        Puppet.debug("#cmc_fw_update had an error -> #{e.inspect}")
+      end
+      @client.close
+      sleep 20
+      status = nil
+      cmcs.each do |cmc|
+        until status == "ready"
+          status = update_status?(cmc)
+          sleep 40
         end
-        up_to_date = firmware_current(partition[:name])
-        sleep 40
-        retries += 1
+        Puppet.debug("CMC updated for partition: #{cmc}")
       end
+      @partitions.each do |partition|
+        retries = 0
+        up_to_date = false
+        until up_to_date
+          if retries > 20 # 10 minute wait forever
+            raise Puppet::Error, "Firmware version not updated after 8 minutes for #{partition[:name]}"
+          end
+          up_to_date = firmware_current(partition[:name])
+          sleep 40
+          retries += 1
+        end
+      end
+      true
+    rescue Exception => e
+      raise Puppet::Error, "General failure updating cmc: #{e.backtrace}"
+    ensure
+      FileUtils.remove_entry_secure unpack_info[:tmpdir] if unpack_info
+      remove_renamed_file
     end
-    remove_renamed_file
-    true
   end
 
   def firmware_current(fw_module)
