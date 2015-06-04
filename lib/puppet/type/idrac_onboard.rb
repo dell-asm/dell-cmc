@@ -1,8 +1,6 @@
 Puppet::Type.newtype(:idrac_onboard) do
   desc "Util to setup networking and new creds on idracs through CMC racadm"
 
-  apply_to_device
-
   newparam(:name, :namevar => true) do
     desc "The cert name of the chassis"
   end

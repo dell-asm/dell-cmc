@@ -1,8 +1,6 @@
 Puppet::Type.newtype(:cmc_onboard) do
   desc "cmc util to setup cmc root user and networking if given"
 
-  apply_to_device
-
   newparam(:name, :namevar => true) do
     desc "The cert name of the chassis"
   end

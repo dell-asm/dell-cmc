@@ -3,8 +3,6 @@
  Puppet::Type.newtype(:chassis_settings) do
   desc "Used for setting up miscellaneous chassis settings"
 
-  apply_to_device
-
   newparam(:name, :namevar => true) do
     desc "The cert name of the chassis"
   end

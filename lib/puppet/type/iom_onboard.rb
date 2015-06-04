@@ -1,8 +1,6 @@
 Puppet::Type.newtype(:iom_onboard) do
   desc "Util to setup networking and new creds on ioms through CMC racadm"
 
-  apply_to_device
-
   newparam(:name, :namevar => true) do
     desc "The cert name of the chassis"
   end

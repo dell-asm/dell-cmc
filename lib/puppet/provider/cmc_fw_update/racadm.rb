@@ -1,6 +1,7 @@
 require 'fileutils'
+require 'puppet/provider/racadm'
 
-Puppet::Type.type(:cmc_fw_update).provide(:racadm) do
+Puppet::Type.type(:cmc_fw_update).provide(:racadm, :parent => Puppet::Provider::Racadm) do
   attr_accessor :device
 
   UNZIP = %x[which unzip].chop
@@ -18,14 +19,13 @@ Puppet::Type.type(:cmc_fw_update).provide(:racadm) do
   end
 
   def get_current_version(fw_version)
-    transport
     begin
-      output = @client.exec!('racadm getsysinfo')
+      conn = connection
+      output = conn.command('racadm getsysinfo')
     rescue Puppet::ExecutionFailure => e
       Puppet.debug("#get_current_version had an error -> #{e.inspect}")
       return nil
     end
-    @client.close
     versions = {}
     primary = {}
     standby = {}
@@ -62,36 +62,24 @@ Puppet::Type.type(:cmc_fw_update).provide(:racadm) do
   #This will throw a puppet exception if the racadm update fails
   def update_status?(cmc)
     begin
-      transport
-      output = @client.exec!("racadm fwupdate -s -m #{cmc}")
+      output = connection.command("racadm fwupdate -s -m #{cmc}")
     rescue Puppet::ExecutionFailure => e
       Puppet.debug("#get_update status had error executing -> #{e.inspect}")
       raise Puppet::Error, "Puppet::Util::Network::Device::Cmc: device failed"
     end
     output ||= ''
     if output.include? "Ready for firmware update"
-      @client.close
       Puppet.debug('Ready for firmware update')
       return "ready"
     elsif output.include? "Firmware update operation failed"
       error_output = get_failed_error(@client)
-      @client.close
       raise Puppet::Error, "Puppet::Firmware::Chassis update failed #{error_output}"
     elsif output.include? "Firmware update in progress"
-      @client.close
       Puppet.debug("Firmware update in progress")
       return "in_progress"
     else
-      @client.close
       return "error"
     end
-  end
-
-  def transport
-    @device ||= Puppet::Util::NetworkDevice.current
-    raise Puppet::Error, "Puppet::Util::NetworkDevice::Cmc: device not initialized #{caller.join("\n")}" unless @device
-    @client = @device.transport.connect
-    @device.transport
   end
 
   def new_binary_name
@@ -160,16 +148,14 @@ Puppet::Type.type(:cmc_fw_update).provide(:racadm) do
         cmcs << cmc
       end
       # @partitions.each_with_index do |partition, index|
-      transport
       update_cmd = "racadm fwupdate -g -u -a #{@fw_host} -d #{location} #{modules}"
       Puppet.debug('Running: ' + update_cmd)
       begin
-        output = @client.exec!(update_cmd)
+        output = connection.command(update_cmd)
         Puppet.debug "#{output}"
       rescue Puppet::ExecutionFailure => e
         Puppet.debug("#cmc_fw_update had an error -> #{e.inspect}")
       end
-      @client.close
       sleep 20
       status = nil
       cmcs.each do |cmc|
@@ -201,9 +187,8 @@ Puppet::Type.type(:cmc_fw_update).provide(:racadm) do
   end
 
   def firmware_current(fw_module)
-    transport
     begin
-      output = @client.exec!("racadm getversion -m #{fw_module.downcase}")
+      output = connection.command("racadm getversion -m #{fw_module.downcase}")
     rescue Puppet::ExecutionFailure => e
       Puppet.debug("#get_current_version had an error -> #{e.inspect}")
       false
@@ -220,8 +205,8 @@ Puppet::Type.type(:cmc_fw_update).provide(:racadm) do
   end
 
 
-  def get_failed_error(client)
-    log = client.exec!("racadm gettracelog")
+  def get_failed_error
+    log = connection.command("racadm gettracelog")
     output = []
     s = false
     log.each_line do |l|
