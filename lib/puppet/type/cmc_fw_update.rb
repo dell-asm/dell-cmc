@@ -1,8 +1,6 @@
 Puppet::Type.newtype(:cmc_fw_update) do
   desc "racadm util to update firmware"
 
-  apply_to_device
-
   ensurable 
 
   newparam(:name, :namevar => true) do
@@ -13,7 +11,7 @@ Puppet::Type.newtype(:cmc_fw_update) do
     desc "The version that the firmware should be on"
   end
 
-  newparam(:asm_hostname) do
+  newparam(:hostname) do
     desc "The ip address for the remote location of the firmware"
   end
 

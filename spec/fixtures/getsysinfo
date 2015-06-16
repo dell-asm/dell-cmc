@@ -1,0 +1,46 @@
+CMC Information:
+CMC Date/Time             = Wed Jun 10 2015 23:04
+Primary CMC Location      = CMC-2
+Primary CMC Version       = 4.50
+Standby CMC Version       = 4.50
+Last Firmware Update      = Wed May 27 2015 12:31
+Hardware Version          = A00
+
+CMC Network Information:
+NIC Enabled               = 1
+MAC Address               = 78:2B:CB:09:39:81
+Register DNS CMC Name     = 1
+DNS CMC Name              = cmc-4MPTBQ1
+Current DNS Domain        =
+VLAN ID                   = 1
+VLAN Priority             = 0
+VLAN Enabled              = 0
+
+CMC IPv4 Information:
+IPv4 Enabled              = 1
+Current IP Address        = 172.17.4.17
+Current IP Gateway        = 172.17.0.1
+Current IP Netmask        = 255.255.0.0
+DHCP Enabled              = 0
+Current DNS Server 1      = 0.0.0.0
+Current DNS Server 2      = 0.0.0.0
+DNS Servers from DHCP     = 1
+
+CMC IPv6 Information:
+IPv6 Enabled              = 0
+Autoconfiguration Enabled = 1
+Link Local Address        = ::
+Current IPv6 Address 1    = ::
+Current IPv6 Gateway      = ::
+Current IPv6 DNS Server 1 = ::
+Current IPv6 DNS Server 2 = ::
+DNS Servers from DHCPv6   = 1
+
+Chassis Information:
+System Model              = PowerEdge M1000e
+System AssetTag           = 00000
+Service Tag               = 4MPTBQ1
+Chassis Name              = CMC-4MPTBQ1
+Chassis Location          = [UNDEFINED]
+Chassis Midplane Version  = 1.1
+Power Status              = ON

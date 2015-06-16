@@ -1,3 +1,6 @@
+require 'puppet/cmc/util'
+require 'puppet/cmc/transport'
+
 class Puppet::Provider::Racadm <  Puppet::Provider
 
   def role_permissions
@@ -9,9 +12,10 @@ class Puppet::Provider::Racadm <  Puppet::Provider
   end
 
   def connection
-    @device ||= Puppet::Util::NetworkDevice.current
+    @transport ||= Puppet::Cmc::Util.get_transport
+    @device ||= Puppet::Cmc::Transport.new(@transport[:host],@transport[:port],@transport[:user],@transport[:password])
     raise Puppet::Error, "Puppet::Util::NetworkDevice::Cmc: device not initialized #{caller.join("\n")}" unless @device
-    @device.transport
+    @device
   end
 
   def racadm_cmd(subcommand, flags={}, params='', verbose=true)
@@ -207,6 +211,7 @@ class Puppet::Provider::Racadm <  Puppet::Provider
     end
 
   end
+
 
   def append_flags(cmd, flag_hash)
     flag_hash.keys.each do |flag|
