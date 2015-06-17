@@ -1,3 +1,4 @@
+require 'puppet/util/network_device/transport/ssh'
 
 module Puppet
   module Cmc
