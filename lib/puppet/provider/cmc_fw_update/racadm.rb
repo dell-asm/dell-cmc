@@ -12,7 +12,7 @@ Puppet::Type.type(:cmc_fw_update).provide(:racadm, :parent => Puppet::Provider::
     @partitions = []
     @fw['version'] = resource[:version]
     @fw['path'] = resource[:path]
-    @fw_host = resource[:asm_hostname]
+    @fw_host = resource[:hostname]
     resource[:copy_to_tftp] ? @copy_to_tftp = resource[:copy_to_tftp] : nil
     current_version = get_current_version(@fw['version'])
     current_version
