@@ -179,7 +179,7 @@ Puppet::Type.type(:cmc_fw_update).provide(:racadm, :parent => Puppet::Provider::
       end
       true
     rescue Exception => e
-      raise Puppet::Error, "General failure updating cmc: #{e.backtrace}"
+      raise Puppet::Error, "General failure updating cmc: #{e.message} : #{e.backtrace}"
     ensure
       FileUtils.remove_entry_secure unpack_info[:tmpdir] if unpack_info
       remove_renamed_file
