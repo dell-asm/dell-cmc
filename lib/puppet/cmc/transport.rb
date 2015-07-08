@@ -50,6 +50,11 @@ module Puppet
             connect
             retry
           end
+        rescue Errno::ECONNRESET => e
+          Puppet.err("SSH Connection reset by peer.  Retrying in 10 seconds...")
+          sleep 10
+          attempts += 1
+          retry
         end
       end
     end
