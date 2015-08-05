@@ -197,7 +197,7 @@ Puppet::Type.type(:cmc_fw_update).provide(:racadm, :parent => Puppet::Provider::
       if line.start_with? fw_module.downcase
         version = line.split(" ")[1].split(".")[0..1].join "."
         Puppet.debug("Current version for #{fw_module} : #{version}. Applied version: #{@fw['version']}")
-        version == @fw['version'] ? otd = true : otd = false
+        Float(version) == Float(@fw['version']) ? otd = true : otd = false
         return otd
       end
     end
