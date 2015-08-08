@@ -3,6 +3,8 @@ provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'racadm')
 Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Racadm) do
 
+  class ExecModeTerminationError < Exception; end
+
   def credential; end
 
   def credential=(credential)
@@ -63,25 +65,35 @@ Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Rac
   end
 
   def send_iom_commands(slot, cmds=[], skip_privilege_mode=false)
+    attempt = 1
     iom_prompt = /^.*[#>].*\z|Password:|Press RETURN/i
     iom_prompt = /.*/ if skip_privilege_mode
     out = connection.command("connect switch-#{slot}", :prompt=>/Escape|console in use/)
     if out =~ /console in use/
       Puppet.err("Could not connect to switch-#{slot}. Serial console is in use.")
     else
-      #Need to carriage return to get things moving
-      out = enter_privileged_exec(iom_prompt, slot) if skip_privilege_mode == false
-      if out =~ /Password:/
-        Puppet.err("Could not connect to switch-#{slot}.  Enable password should not be set")
-      else
-        cmds.each do |cmd|
-          ( skip_privilege_mode and cmd.match(/A/)) ? new_iom_prompt = /yes|>|#|.+/ : new_iom_prompt = iom_prompt
-          out = connection.command(cmd, :prompt=>new_iom_prompt)
-          sleep(5) if skip_privilege_mode == true
+      begin
+        out = enter_privileged_exec(iom_prompt, slot) if skip_privilege_mode == false
+        if out =~ /Password:/
+          Puppet.err("Could not connect to switch-#{slot}.  Enable password should not be set")
+        else
+          cmds.each do |cmd|
+            ( skip_privilege_mode and cmd.match(/A/)) ? new_iom_prompt = /yes|>|#|.+/ : new_iom_prompt = iom_prompt
+            out = connection.command(cmd, :prompt=>new_iom_prompt)
+            if out =~ /RETURN/
+              raise(ExecModeTerminationError, 'CMC kicked out of enabled exec mode')
+            end
+            sleep(5) if skip_privilege_mode == true
+          end
         end
+        #Terminates the console, returns connection back to cmc
+        connection.command("\c|")
+      rescue ExecModeTerminationError
+        raise('CMC terminated enable exec mode, could not configure correctly.') if attempt > 4
+        Puppet.debug('CMC terminated enable exec mode.  Retrying previous commands...')
+        attempt += 1
+        retry
       end
-      #Terminates the console, returns connection back to cmc
-      connection.command("\c|")
     end
   end
 
@@ -90,9 +102,10 @@ Puppet::Type.type(:iom_onboard).provide(:default, :parent=>Puppet::Provider::Rac
     Puppet.debug("Inside enter_privileged_exec")
     begin
       attempts ||= 1
+      #Need to carriage return to get things moving
       connection.command("\r", :prompt=>prompt, :timeout => 10)
       out = connection.command("enable", :prompt=>prompt)
-      if out !~ /#/
+      if out =~ /RETURN/ || out !~ /#/
         raise 'Could not enter privileged exec mode.'
       end
     rescue Exception => e
