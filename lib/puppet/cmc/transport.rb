@@ -61,7 +61,7 @@ module Puppet
       #We overwrite Puppet's method here because some switches require a \r as well to work
       def send(line)
         Puppet.debug("ssh: send #{line}") if @verbose
-        @channel.send_data(line + "\n\r")
+        @channel.send_data(line + "\r")
       end
     end
   end
