@@ -99,7 +99,7 @@ class Puppet::Provider::Racadm <  Puppet::Provider
   def get_password(credential)
     return credential
   end
-  
+
   #This method is only used for extending this provider, in order to add custom decryption to the community string field if desired.
   def get_community_string(string)
     string
@@ -130,7 +130,7 @@ class Puppet::Provider::Racadm <  Puppet::Provider
           slots_to_check[slot] = network
         end
       else
-        Puppet.error("Networking cannot be set for #{module_type}-#{slot}.")
+        Puppet.err("Networking cannot be set for #{module_type}-#{slot}.")
       end
     end
 
@@ -240,7 +240,7 @@ class Puppet::Provider::Racadm <  Puppet::Provider
         if(key.start_with?('#'))
           key = key[1..-1].strip
         end
-        value = line[1].nil? ? "" : line[1].strip 
+        value = line[1].nil? ? "" : line[1].strip
         [key, value]
         }]
     elsif(lines.size == 1)
