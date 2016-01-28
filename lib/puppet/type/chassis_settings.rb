@@ -15,6 +15,9 @@
   #Puppet evaluates properties in the order they are defined here
   newproperty(:register_dns) do
     desc "Whether to register the CMC name on the DNS"
+    munge do |value|
+      value ? "1" : "0"
+    end
   end
   
   newproperty(:dns_name) do
@@ -87,11 +90,7 @@
   newproperty(:perf_over_redundancy) do
     desc ""
     munge do |value|
-      if(value == true )
-      '1'
-    elsif(value== false )
-      '0'
-    end
+      value ? "1" : "0"
     end
   end
 
@@ -99,11 +98,7 @@
   newproperty(:dynamic_power_engage) do
     desc ""
     munge do |value|
-      if(value == true )
-      '1'
-    elsif(value== false )
-      '0'
-    end
+      value ? "1" : "0"
     end
   end
 
@@ -112,11 +107,7 @@
   newproperty(:ntp_enabled) do
     desc ""
     munge do |value|
-      if(value == true )
-        '1'
-      elsif(value == false )
-        '0'
-      end
+      value ? "1" : "0"
     end
   end
 

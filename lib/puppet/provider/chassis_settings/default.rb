@@ -16,7 +16,7 @@ Puppet::Type.type(:chassis_settings).provide(:default, :parent=>Puppet::Provider
   end
   
   def register_dns=(register)
-    racadm_set_config('cfgLANNetworking', 'cfgDNSRegisterRac', enabled_bit(register) )
+    racadm_set_config('cfgLANNetworking', 'cfgDNSRegisterRac', register)
   end
 
   def dns_name
