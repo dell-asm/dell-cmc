@@ -80,6 +80,8 @@
         '1'
       when "powersupply"
         '2'
+      when "alertonly"
+        '3'
       else
         raise "Invalid redundancy policy"
       end
