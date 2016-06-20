@@ -17,22 +17,39 @@ module Puppet
         @timeout = Net::SSH::Connection::Session::DEFAULT_IO_SELECT_TIMEOUT
       end
 
-      def connect
-        i = 0
+      def connect(&block)
         begin
-          super()
-          #There probably shouldn't be any reason to do this, but trying to make the "least impactful changes" for now
-          @client = @ssh
-        rescue => e
-          i += 1
-          if i < 7
-            Puppet.debug("Puppet::Util::NetworkDevice::Cmc::Transport failed to connect. retrying in 30 seconds...")
-            sleep 30
-            retry
-          else
-            raise e
+          Puppet.debug "Trying to connect to #{host} as #{user}"
+          @ssh = Net::SSH.start(host, user, :port => port, :password => password, :timeout => timeout,
+                                :paranoid => Net::SSH::Verifiers::Null.new,
+                                :global_known_hosts_file=>"/dev/null")
+        rescue TimeoutError
+          raise TimeoutError, "SSH timed out while trying to connect to #{host}"
+        rescue Net::SSH::AuthenticationFailed
+          raise Puppet::Error, "SSH auth failed while trying to connect to #{host} as #{user}"
+        rescue Net::SSH::Exception => error
+          raise Puppet::Error, "SSH connection failure to #{host}"
+        end
+
+        @buf      = ''
+        @eof      = false
+        @channel  = nil
+        @ssh.open_channel do |channel|
+          channel.request_pty {|ch, success| raise "Failed to open PTY" unless success}
+
+          channel.send_channel_request('shell') do |ch, success|
+            raise 'Failed to open SSH SHELL Channel' unless success
+
+            ch.on_data {|ch, data| @buf << data}
+            ch.on_extended_data {|ch, type, data| @buf << data if type == 1}
+            ch.on_close {@eof = true}
+
+            @channel = ch
+            expect(default_prompt, &block)
+            return
           end
         end
+        @ssh.loop
       end
 
       def command(cmd, options = {})
