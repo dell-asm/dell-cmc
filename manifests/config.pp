@@ -31,9 +31,7 @@ define cmc::config(
   $port     = '22',
   $target   = "${settings::confdir}/defice/${name}.conf"
   ) {
-  
   include cmc::params
-  
   $owner = $cmc::params::owner
   $group = $cmc::params::group
   $mode  = $cmc::params::mode
