@@ -141,4 +141,8 @@
     desc ""
   end
 
+  newproperty(:stash_mode) do
+    newvalues("dual", "single", "joined")
+  end
+
 end
