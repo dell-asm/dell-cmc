@@ -185,4 +185,76 @@ Puppet::Type.type(:chassis_settings).provide(:default, :parent=>Puppet::Provider
     racadm_set_config('cfgChassisPower', "cfgChassisPowerCap#{power_cap_suffix}", power_cap)
   end
 
+  def stash_mode
+    storage_modes = []
+    storage_devices.each do |storage_device|
+      current_mode = racadm_cmd("getconfig -g cfgStorageModule -m storage-#{storage_device} -o cfgStorageModuleStorageMode")
+      storage_modes << stash_mode_value(current_mode[1])
+    end
+    storage_modes.uniq!
+    storage_modes.size == 1 ? storage_modes[0] : storage_modes
+  end
+
+  def stash_mode=(value)
+    Puppet.debug("Need to update stash mode to #{value}")
+    return true if storage_devices.empty?
+
+    # power-off all storage devices
+    racadm_cmd("serveraction -a powerdown")
+    storage_devices.each do |storage_device|
+      Puppet.debug("Storage device: storage-#{storage_device}")
+      racadm_cmd("serveraction -m storage-#{storage_device} powerdown")
+    end
+
+    sleep(10)
+
+    storage_devices.each do |storage_device|
+      Puppet.debug("Storage device: storage-#{storage_device}")
+      racadm_cmd("config -g cfgStorageModule -m storage-#{storage_device} -o cfgStorageModuleStorageMode #{storage_mode(value)}")
+    end
+
+    # power-on all storage devices
+    racadm_cmd("serveraction -a powerup")
+    storage_devices.each do |storage_device|
+      Puppet.debug("Storage device: storage-#{storage_device}")
+      racadm_cmd("serveraction -m storage-#{storage_device} poweron")
+    end
+
+  end
+
+  def storage_devices
+    @storage_devices ||= begin
+      output = racadm_cmd("getstoragemoduleinfo")
+      output.collect do |line|
+        line.scan(/^Storage-(\d+)\s*System.Modular.\d+/) || []
+      end.flatten.uniq
+    end
+  end
+
+  def stash_mode_value(value)
+    case value.to_s
+      when "0"
+        "joined"
+      when "1"
+        "dual"
+      when "2"
+        "single"
+      else
+        ""
+    end
+  end
+
+  def storage_mode(value)
+    case value.to_s
+      when "joined"
+        "0"
+      when "dual"
+        "1"
+      when "single"
+        "2"
+      else
+        ""
+    end
+  end
+
 end
