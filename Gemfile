@@ -37,7 +37,7 @@ group(:development, :test) do
   # versions matching ~> 0.10.5 are supported. All other versions are unsupported
   # and can be expected to fail.
   gem "mocha", "~> 0.10.5", :require => false
-
+  gem 'json_pure', '2.0.1' # pin this puppet dependency to 1.9-compat version
   gem "yarjuf", "~> 1.0"
 end
 

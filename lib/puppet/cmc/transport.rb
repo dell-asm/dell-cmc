@@ -18,6 +18,7 @@ module Puppet
       end
 
       def connect(&block)
+        retries = 0
         begin
           Puppet.debug "Trying to connect to #{host} as #{user}"
           @ssh = Net::SSH.start(host, user, :port => port, :password => password, :timeout => timeout,
@@ -29,6 +30,15 @@ module Puppet
           raise Puppet::Error, "SSH auth failed while trying to connect to #{host} as #{user}"
         rescue Net::SSH::Exception => error
           raise Puppet::Error, "SSH connection failure to #{host}"
+        rescue StandardError => e
+          Puppet.debug("SSH Connection error: %s : retrying for 8 minutes" % e.class)
+          if retries < 5
+            retries += 1
+            sleep 30
+            retry
+          else
+            raise Puppet::Error, "SSH Connection error %s\n%s\n %\s" % [e, e.message, e.backtrace.join("\n")]
+          end
         end
 
         @buf      = ''
@@ -62,8 +72,8 @@ module Puppet
             raise e
           else
             attempts += 1
-            Puppet.err("SSH Connection was closed by remote host. Attempting to reconnect in 5 seconds...")
-            sleep 5
+            Puppet.err("SSH Connection was closed by remote host. Attempting to reconnect in 20 seconds...")
+            sleep 20
             connect
             retry
           end
