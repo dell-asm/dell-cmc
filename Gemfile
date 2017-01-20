@@ -2,6 +2,11 @@ source "https://rubygems.org"
 
 gem 'puppet', '3.3.2'
 
+# Use asm-deployer for unit testing of server and chassis discovery scripts
+gem 'asm-deployer', :git => "git@github.com:dell-asm/asm-deployer.git", :branch => "master"    #use for travisCi
+#gem 'asm-deployer', :git => "https://github.com/dell-asm/asm-deployer.git", :branch => "master" #use for local
+
+
 def location_for(place, fake_version = nil)
   if place =~ /^(git:[^#]*)#(.*)/
     [fake_version, { :git => $1, :branch => $2, :require => false }].compact
