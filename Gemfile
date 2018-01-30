@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-gem 'puppet', '3.3.2'
+gem 'puppet', '3.6.2'
 
 def location_for(place, fake_version = nil)
   if place =~ /^(git:[^#]*)#(.*)/
@@ -43,7 +43,7 @@ end
 
 group(:extra) do
   gem "rack", "~> 1.4", :require => false
-  gem "activerecord", '~> 3.0.7', :require => false
+  gem "activerecord", '~> 3.2.19', :require => false
   gem "couchrest", '~> 1.0', :require => false
   gem "net-ssh", '~> 2.1', :require => false
   gem "puppetlabs_spec_helper", :require => false
@@ -65,7 +65,7 @@ platforms :mswin, :mingw do
   gem "win32console", "1.3.2", :require => false
   gem "windows-api", "0.4.2", :require => false
   gem "windows-pr", "1.2.2", :require => false
-  gem "minitar", "0.5.4", :require => false
+  gem "minitar", "0.6", :require => false
 end
 
 if File.exists? "#{__FILE__}.local"
