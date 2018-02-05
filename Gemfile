@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-gem 'puppet', '3.6.2'
+gem 'puppet', '5.3.3'
 
 def location_for(place, fake_version = nil)
   if place =~ /^(git:[^#]*)#(.*)/
@@ -21,8 +21,8 @@ platforms :ruby do
 end
 
 #gem "puppet", :path => File.dirname(__FILE__), :require => false
-gem "facter", *location_for(ENV['FACTER_LOCATION'] || '~> 1.6')
-gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 1.0')
+gem "facter", *location_for(ENV['FACTER_LOCATION'] || '~> 2.0')
+gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 3.2.1')
 gem "rake", '<11.0', :require => false
 gem "rgen", "0.6.5", :require => false
 
