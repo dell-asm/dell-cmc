@@ -23,7 +23,7 @@ end
 #gem "puppet", :path => File.dirname(__FILE__), :require => false
 gem "facter", *location_for(ENV['FACTER_LOCATION'] || '~> 2.0')
 gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 3.2.1')
-gem "rake", :require => false
+gem "rake", '<11.0', :require => false
 gem "rgen", "0.6.5", :require => false
 
 
@@ -32,7 +32,7 @@ group(:development, :test) do
   # Jenkins workers may be using RSpec 2.9, so RSpec 2.11 syntax
   # (like `expect(value).to eq matcher`) should be avoided.
   gem "rspec", "~> 2.11.0", :require => false
-  gem "rspec-puppet"
+  gem "rspec-puppet", "2.4.0"
   # Mocha is not compatible across minor version changes; because of this only
   # versions matching ~> 0.10.5 are supported. All other versions are unsupported
   # and can be expected to fail.
@@ -43,7 +43,7 @@ end
 
 group(:extra) do
   gem "rack", "~> 1.4", :require => false
-  gem "activerecord", '~> 3.0.7', :require => false
+  gem "activerecord", '~> 3.2.19', :require => false
   gem "couchrest", '~> 1.0', :require => false
   gem "net-ssh", '~> 2.1', :require => false
   gem "puppetlabs_spec_helper", :require => false
@@ -65,7 +65,7 @@ platforms :mswin, :mingw do
   gem "win32console", "1.3.2", :require => false
   gem "windows-api", "0.4.2", :require => false
   gem "windows-pr", "1.2.2", :require => false
-  gem "minitar", "0.5.4", :require => false
+  gem "minitar", "0.6", :require => false
 end
 
 if File.exists? "#{__FILE__}.local"
